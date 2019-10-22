@@ -24,10 +24,8 @@ package com.mrivanplays.siteapi.handlers;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.HttpMethod;
-import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebRequest;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.util.Cookie;
 import com.mrivanplays.siteapi.utils.Resource;
 import com.mrivanplays.siteapi.utils.Utils;
@@ -35,10 +33,6 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -50,6 +44,25 @@ import java.util.logging.Logger;
 
 public class SpigotDownloadHandler implements HttpHandler {
 
+    private WebClient webClient;
+
+    public SpigotDownloadHandler() {
+        webClient = new WebClient(BrowserVersion.CHROME);
+        webClient.getOptions().setJavaScriptEnabled(true);
+        webClient.getOptions().setTimeout(15000);
+        webClient.getOptions().setCssEnabled(false);
+        webClient.getOptions().setRedirectEnabled(true);
+        webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
+        webClient.getOptions().setThrowExceptionOnScriptError(false);
+        webClient.getOptions().setPrintContentOnFailingStatusCode(false);
+        Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF);
+
+        for (HttpCookie temp : Objects.requireNonNull(Utils.getCookies("https://www.google.com"))) {
+            Cookie cookie = new Cookie(temp.getDomain(), temp.getName(), temp.getValue());
+            webClient.getCookieManager().addCookie(cookie);
+        }
+    }
+
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         // todo: improve
@@ -59,7 +72,7 @@ public class SpigotDownloadHandler implements HttpHandler {
         headers.add("Content-Disposition", "attachment;filename=" + resourceId + ".jar");
 
         exchange.sendResponseHeaders(200, 0);
-        try (BufferedOutputStream out = new BufferedOutputStream(exchange.getResponseBody())) {
+        try (OutputStream out = exchange.getResponseBody()) {
 
             Resource resource = new Resource(resourceId);
 
@@ -76,30 +89,7 @@ public class SpigotDownloadHandler implements HttpHandler {
     }
 
     private InputStream getInputStream(String url) throws IOException {
-        WebClient webClient = new WebClient(BrowserVersion.CHROME);
-        webClient.getOptions().setJavaScriptEnabled(true);
-        webClient.getOptions().setTimeout(15000);
-        webClient.getOptions().setCssEnabled(false);
-        webClient.getOptions().setRedirectEnabled(true);
-        webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
-        webClient.getOptions().setThrowExceptionOnScriptError(false);
-        webClient.getOptions().setPrintContentOnFailingStatusCode(false);
-
-        Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF);
-
-        for (HttpCookie temp : Objects.requireNonNull(Utils.getCookies("https://www.google.com"))) {
-            Cookie cookie = new Cookie(temp.getDomain(), temp.getName(), temp.getValue());
-            webClient.getCookieManager().addCookie(cookie);
-        }
         WebRequest wr = new WebRequest(new URL(url), HttpMethod.GET);
-        Page page = webClient.getPage(wr);
-        if (!(page instanceof HtmlPage)) {
-            return null;
-        }
-
-        if (!((HtmlPage) page).asXml().contains("DDoS protection by Cloudflare")) {
-            return null;
-        }
 
         try {
             Thread.sleep(5000);
@@ -107,6 +97,6 @@ public class SpigotDownloadHandler implements HttpHandler {
             Thread.currentThread().interrupt();
         }
 
-        return webClient.getCurrentWindow().getEnclosedPage().getWebResponse().getContentAsStream();
+        return webClient.getPage(wr).getEnclosingWindow().getEnclosedPage().getWebResponse().getContentAsStream();
     }
 }
