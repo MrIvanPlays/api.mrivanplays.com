@@ -60,26 +60,13 @@ public class SpigotDownloadHandler implements HttpHandler {
 
         exchange.sendResponseHeaders(200, 0);
         try (BufferedOutputStream out = new BufferedOutputStream(exchange.getResponseBody())) {
-            File file = File.createTempFile(resourceId, " .jar");
-            file.deleteOnExit();
 
             Resource resource = new Resource(resourceId);
-            InputStream in = getInputStream(resource.getDownloadUrl());
 
-            try (OutputStream fileOut = new BufferedOutputStream(new FileOutputStream(file))) {
-                byte[] buffer = new byte[1024];
-
-                int numRead;
-                while ((numRead = in.read(buffer)) != -1) {
-                    fileOut.write(buffer, 0, numRead);
-                }
-                in.close();
-            }
-
-            try (InputStream inputStream = new FileInputStream(file)) {
-                byte[] buffer = new byte[inputStream.available()];
+            try (InputStream in = getInputStream(resource.getDownloadUrl())) {
+                byte[] buffer = new byte[in.available()];
                 int count;
-                while ((count = inputStream.read(buffer)) != -1) {
+                while ((count = in.read(buffer)) != -1) {
                     out.write(buffer, 0, count);
                 }
             }
