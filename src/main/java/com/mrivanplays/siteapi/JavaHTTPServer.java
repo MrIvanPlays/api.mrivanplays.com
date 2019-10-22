@@ -34,7 +34,7 @@ public class JavaHTTPServer {
 
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(5858), 0);
-//        server.createContext("/spigot/download/", new SpigotDownloadHandler());
+        server.createContext("/spigot/download/", new SpigotDownloadHandler());
         server.createContext("/meme", new MemeHandler());
         server.createContext("/", new DefaultHandler());
         server.start();

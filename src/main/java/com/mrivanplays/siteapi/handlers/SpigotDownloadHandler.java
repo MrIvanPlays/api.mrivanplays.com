@@ -27,11 +27,14 @@ import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.util.Cookie;
-import com.mrivanplays.siteapi.utils.Resource;
 import com.mrivanplays.siteapi.utils.Utils;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,9 +77,11 @@ public class SpigotDownloadHandler implements HttpHandler {
         exchange.sendResponseHeaders(200, 0);
         try (OutputStream out = exchange.getResponseBody()) {
 
-            Resource resource = new Resource(resourceId);
+            Document document = Jsoup.connect("https://spigotmc.org/resources/" + resourceId).userAgent(Utils.userAgent).get();
+            Element redirect = document.select("a.inner[href]").first();
+            String downloadUrl = "https://spigotmc.org/" + redirect.attr("href");
 
-            try (InputStream in = getInputStream(resource.getDownloadUrl())) {
+            try (InputStream in = getInputStream(downloadUrl)) {
                 byte[] buffer = new byte[in.available()];
                 int count;
                 while ((count = in.read(buffer)) != -1) {

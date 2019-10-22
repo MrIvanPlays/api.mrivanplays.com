@@ -47,9 +47,7 @@ public class MemeHandler implements HttpHandler {
         exchange.sendResponseHeaders(200, 0);
 
         URL url = new URL("https://reddit.com/r/meme/random.json");
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-        connection.addRequestProperty("User-Agent", Utils.userAgent);
+        HttpURLConnection connection = Utils.openConnection(url);
 
         try (Reader reader = new InputStreamReader(connection.getInputStream())) {
             JsonArray requested = JsonParser.parseReader(reader).getAsJsonArray();

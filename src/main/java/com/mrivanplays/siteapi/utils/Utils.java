@@ -22,13 +22,14 @@
 */
 package com.mrivanplays.siteapi.utils;
 
+import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.CookieStore;
 import java.net.HttpCookie;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.List;
 
 public class Utils {
@@ -43,7 +44,7 @@ public class Utils {
             CookieHandler.setDefault(manager);
 
             URL url = new URL(urlName);
-            URLConnection connection = url.openConnection();
+            HttpURLConnection connection = openConnection(url);
             connection.getContent();
 
             CookieStore cookieJar = manager.getCookieStore();
@@ -54,5 +55,12 @@ public class Utils {
         }
 
         return cookies;
+    }
+
+    public static HttpURLConnection openConnection(URL url) throws IOException  {
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.addRequestProperty("User-Agent", userAgent);
+        return connection;
     }
 }
