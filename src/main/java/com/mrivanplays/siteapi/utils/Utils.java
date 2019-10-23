@@ -22,6 +22,8 @@
 */
 package com.mrivanplays.siteapi.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -32,9 +34,18 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 
+import okhttp3.OkHttpClient;
+
 public class Utils {
 
     public static String userAgent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1";
+    public static ObjectMapper objectMapper;
+    public static OkHttpClient okHttpClient;
+
+    static {
+        objectMapper = new ObjectMapper();
+        okHttpClient = new OkHttpClient();
+    }
 
     public static List<HttpCookie> getCookies(String urlName) {
         List<HttpCookie> cookies;

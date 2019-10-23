@@ -22,30 +22,29 @@
 */
 package com.mrivanplays.siteapi.handlers;
 
-import com.sun.net.httpserver.Headers;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
+import com.mrivanplays.siteapi.Server;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
 
-public class DefaultHandler implements HttpHandler {
+import spark.Request;
+import spark.Response;
+import spark.Route;
+
+public class DefaultHandler implements Route {
 
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        Headers headers = exchange.getResponseHeaders();
-        headers.set("Content-Type", "text/html");
-        exchange.sendResponseHeaders(200, 0);
-
-        try (OutputStream out = exchange.getResponseBody()) {
-            try (InputStream in = getClass().getClassLoader().getResourceAsStream("default-page.html")) {
-                byte[] buffer = new byte[in.available()];
-                int count;
-                while ((count = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, count);
-                }
+    public Object handle(Request request, Response response) throws Exception {
+        response.type("text/html");
+        response.status(200);
+        StringBuilder bean = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(getClass().getClassLoader().getResourceAsStream("default-page.html")))) {
+            for (String line : reader.lines().collect(Collectors.toList())) {
+                bean.append(line).append("\n");
             }
         }
+        return bean.toString();
     }
 }

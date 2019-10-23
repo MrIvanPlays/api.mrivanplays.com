@@ -28,9 +28,6 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.util.Cookie;
 import com.mrivanplays.siteapi.utils.Utils;
-import com.sun.net.httpserver.Headers;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -46,19 +43,29 @@ import java.io.OutputStream;
 import java.net.HttpCookie;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class SpigotDownloadHandler implements HttpHandler {
+import javax.servlet.ServletOutputStream;
+
+import spark.Request;
+import spark.Response;
+import spark.Route;
+
+public class SpigotDownloadHandler implements Route {
 
     private WebClient webClient;
     private List<JarStorage> jarStorage;
+    private Map<JarStorage, ScheduledFuture<?>> tasksMap = new HashMap<>();
     private ScheduledExecutorService executor;
 
     public SpigotDownloadHandler() {
@@ -81,18 +88,23 @@ public class SpigotDownloadHandler implements HttpHandler {
     }
 
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        String resourceId = exchange.getRequestURI().toString().replace("/spigot/download/", "");
-        Headers headers = exchange.getResponseHeaders();
-        headers.add("Content-Type", "application/octec-stream");
-        headers.add("Content-Disposition", "attachment;filename=" + resourceId + ".jar");
+    public Object handle(Request request, Response response) throws Exception {
+        String resourceId = request.params(":id");
+        response.type("application/octec-stream");
+        response.header("Content-Disposition", "attachment;filename=" + resourceId + ".jar");
+        response.status(200);
 
-        exchange.sendResponseHeaders(200, 0);
-        try (OutputStream out = exchange.getResponseBody()) {
+        JarStorage storage = getResource(resourceId);
 
-            JarStorage storage = getResource(resourceId);
+        if (!storage.file.exists()) {
+            tasksMap.remove(storage).cancel(true);
+            jarStorage.remove(storage);
+        }
 
-            try (InputStream in = new FileInputStream(storage.file)) {
+        JarStorage lastStorage = getResource(resourceId);
+
+        try (ServletOutputStream out = response.raw().getOutputStream()) {
+            try (InputStream in = new FileInputStream(lastStorage.file)) {
                 byte[] buffer = new byte[in.available()];
                 int count;
                 while ((count = in.read(buffer)) != -1) {
@@ -101,7 +113,7 @@ public class SpigotDownloadHandler implements HttpHandler {
             }
         }
 
-        exchange.getResponseBody().close();
+        return null;
     }
 
     private InputStream getInputStream(String url) throws IOException {
@@ -121,7 +133,7 @@ public class SpigotDownloadHandler implements HttpHandler {
         if (search.isPresent()) {
             return search.get();
         } else {
-            File file = new File("./spigotdownload/" + spigotId + ".jar");
+            File file = new File("./usr/share/nginx/siteapi/spigotdownload/" + spigotId + ".jar");
             if (!file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();
             }
@@ -140,10 +152,11 @@ public class SpigotDownloadHandler implements HttpHandler {
             }
             JarStorage jar = new JarStorage(spigotId, file);
             jarStorage.add(jar);
-            executor.schedule(() -> {
+            ScheduledFuture<?> task = executor.schedule(() -> {
                 jarStorage.remove(jar);
                 jar.file.delete();
             }, 15, TimeUnit.MINUTES);
+            tasksMap.put(jar, task);
             return jar;
         }
     }

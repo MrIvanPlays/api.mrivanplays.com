@@ -22,55 +22,52 @@
 */
 package com.mrivanplays.siteapi.handlers;
 
-import com.google.gson.JsonObject;
-
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mrivanplays.siteapi.utils.Utils;
-import com.sun.net.httpserver.Headers;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.StringReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-public class LibraryVersionHandler implements HttpHandler {
+import okhttp3.Call;
+import spark.Request;
+import spark.Response;
+import spark.Route;
+
+public class LibraryVersionHandler implements Route {
 
     @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        Headers headers = exchange.getResponseHeaders();
-        headers.set("Content-Type", "text");
+    public Object handle(Request request, Response response) throws Exception {
+        response.type("text");
 
-        String dependency = exchange.getRequestURI().toString().replace("/dependency/version/", "");
+        String dependency = request.params(":id");
 
-        URL url = new URL("https://repo.mrivanplays.com/repository/ivan/com/mrivanplays/" + dependency + "/maven-metadata.xml");
-        HttpURLConnection connection = Utils.openConnection(url);
-        if (connection.getResponseCode() == 404) {
-            exchange.sendResponseHeaders(404, 0);
-            JsonObject response = new JsonObject();
-            response.addProperty("error", 404);
-            response.addProperty("message", "Dependency not found on nexus");
-            try (OutputStream out = exchange.getResponseBody()) {
-                out.write(response.toString().getBytes());
-            }
-            return;
+        okhttp3.Request okHttpRequest = new okhttp3.Request.Builder()
+                .url("https://repo.mrivanplays.com/repository/ivan/com/mrivanplays/" + dependency + "/maven-metadata.xml")
+                .header("User-Agent", Utils.userAgent)
+                .build();
+        Call call = Utils.okHttpClient.newCall(okHttpRequest);
+        okhttp3.Response okHttpResponse = call.execute();
+        if (okHttpResponse.code() == 404) {
+            response.status(404);
+            ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
+            objectNode.put("error", 404);
+            objectNode.put("message", "Dependency not found on nexus");
+            return objectNode.toString();
         }
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(okHttpResponse.body().byteStream()))) {
             List<String> lines = reader.lines().collect(Collectors.toList());
-            exchange.sendResponseHeaders(200, 0);
+            response.status(200);
             StringBuilder bufferBuilder = new StringBuilder();
             bufferBuilder.append("<?xml version=\"1.0\"?>").append("\n");
             for (String line : lines) {
@@ -78,14 +75,15 @@ public class LibraryVersionHandler implements HttpHandler {
             }
             String buffer = bufferBuilder.toString();
             try {
+                // todo: make DOM recognize xml
                 DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
                 InputSource inputSource = new InputSource();
                 inputSource.setCharacterStream(new StringReader(buffer));
                 Document doc = documentBuilder.parse(inputSource);
-                // todo: make DOM read my xml
             } catch (ParserConfigurationException | SAXException e) {
                 e.printStackTrace();
             }
+            return "Currently in making stage.";
         }
     }
 }
