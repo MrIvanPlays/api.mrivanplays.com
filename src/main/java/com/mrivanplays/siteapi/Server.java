@@ -53,13 +53,14 @@ public class Server {
                     .header("User-Agent", Utils.userAgent)
                     .build();
             Call call = Utils.okHttpClient.newCall(okhttpRequest);
-            Response okHttpResponse = call.execute();
+            try (Response okHttpResponse = call.execute()) {
 
-            JsonNode node = Utils.objectMapper.readTree(new InputStreamReader(okHttpResponse.body().byteStream()));
-            ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-            jsonResponse.put("image", node.get(0).with("data").withArray("children").get(0).with("data").get("url").asText());
+                JsonNode node = Utils.objectMapper.readTree(new InputStreamReader(okHttpResponse.body().byteStream()));
+                ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
+                jsonResponse.put("image", node.get(0).with("data").withArray("children").get(0).with("data").get("url").asText());
 
-            return jsonResponse.toString();
+                return jsonResponse.toString();
+            }
         });
 
 //        SpigotDownloadHandler sdh = new SpigotDownloadHandler();

@@ -56,34 +56,35 @@ public class LibraryVersionHandler implements Route {
                 .header("User-Agent", Utils.userAgent)
                 .build();
         Call call = Utils.okHttpClient.newCall(okHttpRequest);
-        okhttp3.Response okHttpResponse = call.execute();
-        if (okHttpResponse.code() == 404) {
-            response.status(404);
-            ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
-            objectNode.put("error", 404);
-            objectNode.put("message", "Dependency not found on nexus");
-            return objectNode.toString();
-        }
+        try (okhttp3.Response okHttpResponse = call.execute()) {
+            if (okHttpResponse.code() == 404) {
+                response.status(404);
+                ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
+                objectNode.put("error", 404);
+                objectNode.put("message", "Dependency not found on nexus");
+                return objectNode.toString();
+            }
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(okHttpResponse.body().byteStream()))) {
-            List<String> lines = reader.lines().collect(Collectors.toList());
-            response.status(200);
-            StringBuilder bufferBuilder = new StringBuilder();
-            bufferBuilder.append("<?xml version=\"1.0\"?>").append("\n");
-            for (String line : lines) {
-                bufferBuilder.append(line).append("\n");
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(okHttpResponse.body().byteStream()))) {
+                List<String> lines = reader.lines().collect(Collectors.toList());
+                response.status(200);
+                StringBuilder bufferBuilder = new StringBuilder();
+                bufferBuilder.append("<?xml version=\"1.0\"?>").append("\n");
+                for (String line : lines) {
+                    bufferBuilder.append(line).append("\n");
+                }
+                String buffer = bufferBuilder.toString();
+                try {
+                    // todo: make DOM recognize xml
+                    DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+                    InputSource inputSource = new InputSource();
+                    inputSource.setCharacterStream(new StringReader(buffer));
+                    Document doc = documentBuilder.parse(inputSource);
+                } catch (ParserConfigurationException | SAXException e) {
+                    e.printStackTrace();
+                }
+                return "Currently in making stage.";
             }
-            String buffer = bufferBuilder.toString();
-            try {
-                // todo: make DOM recognize xml
-                DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                InputSource inputSource = new InputSource();
-                inputSource.setCharacterStream(new StringReader(buffer));
-                Document doc = documentBuilder.parse(inputSource);
-            } catch (ParserConfigurationException | SAXException e) {
-                e.printStackTrace();
-            }
-            return "Currently in making stage.";
         }
     }
 }
