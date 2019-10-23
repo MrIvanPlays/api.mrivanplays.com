@@ -24,7 +24,6 @@ package com.mrivanplays.siteapi;
 
 import com.mrivanplays.siteapi.handlers.DefaultHandler;
 import com.mrivanplays.siteapi.handlers.MemeHandler;
-import com.mrivanplays.siteapi.handlers.SpigotDownloadHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
@@ -36,6 +35,7 @@ public class JavaHTTPServer {
         HttpServer server = HttpServer.create(new InetSocketAddress(5858), 0);
 //        server.createContext("/spigot/download/", new SpigotDownloadHandler());
         server.createContext("/meme", new MemeHandler());
+//        server.createContext("/library/version/", new LibraryVersionHandler());
         server.createContext("/", new DefaultHandler());
         server.start();
     }
