@@ -46,9 +46,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -78,13 +76,26 @@ public class SpigotDownloadHandler implements Route {
         webClient.getOptions().setThrowExceptionOnScriptError(false);
         webClient.getOptions().setPrintContentOnFailingStatusCode(false);
         Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF);
+        List<HttpCookie> googleCookies = Utils.getCookies("https://www.google.com");
 
-        for (HttpCookie temp : Objects.requireNonNull(Utils.getCookies("https://www.google.com"))) {
-            Cookie cookie = new Cookie(temp.getDomain(), temp.getName(), temp.getValue());
-            webClient.getCookieManager().addCookie(cookie);
+        if (!googleCookies.isEmpty()) {
+            for (HttpCookie temp : googleCookies) {
+                Cookie cookie = new Cookie(temp.getDomain(), temp.getName(), temp.getValue());
+                webClient.getCookieManager().addCookie(cookie);
+            }
         }
+
+        // these cookies are very important!!!
+        List<HttpCookie> cloudflareCookies = Utils.getCookies("https://www.cloudflare.com");
+        if (!cloudflareCookies.isEmpty()) {
+            for (HttpCookie temp : cloudflareCookies) {
+                Cookie cookie = new Cookie(temp.getDomain(), temp.getName(), temp.getValue());
+                webClient.getCookieManager().addCookie(cookie);
+            }
+        }
+
         jarStorage = new ArrayList<>();
-        executor = Executors.newScheduledThreadPool(2);
+        executor = Utils.executor;
     }
 
     @Override
@@ -118,13 +129,6 @@ public class SpigotDownloadHandler implements Route {
 
     private InputStream getInputStream(String url) throws IOException {
         WebRequest wr = new WebRequest(new URL(url), HttpMethod.GET);
-
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
         return webClient.getPage(wr).getEnclosingWindow().getEnclosedPage().getWebResponse().getContentAsStream();
     }
 

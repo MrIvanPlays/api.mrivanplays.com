@@ -25,18 +25,14 @@ package com.mrivanplays.siteapi.handlers;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mrivanplays.siteapi.utils.Utils;
 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import okhttp3.Call;
 import spark.Request;
@@ -51,15 +47,12 @@ public class LibraryVersionHandler implements Route {
 
         String dependency = request.params(":id");
 
-        okhttp3.Request okHttpRequest = new okhttp3.Request.Builder()
-                .url("https://repo.mrivanplays.com/repository/ivan/com/mrivanplays/" + dependency + "/maven-metadata.xml")
-                .header("User-Agent", Utils.userAgent)
-                .build();
-        Call call = Utils.okHttpClient.newCall(okHttpRequest);
+        Call call = Utils.request("https://repo.mrivanplays.com/repository/ivan/com/mrivanplays/" + dependency + "/maven-metadata.xml");
         try (okhttp3.Response okHttpResponse = call.execute()) {
             if (okHttpResponse.code() == 404) {
                 response.status(404);
                 ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
+                objectNode.put("success", false);
                 objectNode.put("error", 404);
                 objectNode.put("message", "Dependency not found on nexus");
                 return objectNode.toString();
@@ -74,16 +67,12 @@ public class LibraryVersionHandler implements Route {
                     bufferBuilder.append(line).append("\n");
                 }
                 String buffer = bufferBuilder.toString();
-                try {
-                    // todo: make DOM recognize xml
-                    DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                    InputSource inputSource = new InputSource();
-                    inputSource.setCharacterStream(new StringReader(buffer));
-                    Document doc = documentBuilder.parse(inputSource);
-                } catch (ParserConfigurationException | SAXException e) {
-                    e.printStackTrace();
-                }
-                return "Currently in making stage.";
+                Document document = Jsoup.parse(buffer);
+                Element version = document.selectFirst("version");
+                ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
+                objectNode.put("success", true);
+                objectNode.put("version", version.text());
+                return objectNode.toString();
             }
         }
     }

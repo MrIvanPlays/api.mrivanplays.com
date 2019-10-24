@@ -10,7 +10,7 @@
     }
 
     body {
-        font-size: 105%;
+        font-size: 110%;
         font-family: "Raleway";
         background-color: black;
     }
@@ -39,6 +39,13 @@
     <p>
         <a href="https://api.mrivanplays.com/meme">https://api.mrivanplays.com/meme</a> - gets a random meme
         from <a href="https://reddit.com/r/meme">reddit</a>. Returned content is a json string with a link to the image.
+        This API has a rate limit of 100 requests per minute! If you make more than 100 requests, you will be faced with
+        error code 88 for being rate limited and success boolean false.
+    </p>
+    <p>
+        https://api.mrivanplays.com/library/version/[library name] - Shows the version of the specified library, which have been
+        uploaded to <a href="https://repo.mrivanplays.com">https://repo.mrivanplays.com</a>. The returned content is a json string
+        with a success boolean. If the success boolean is false, this is because of a 404 not found.
     </p>
 </div>
 </body>

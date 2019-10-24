@@ -22,16 +22,9 @@
 */
 package com.mrivanplays.siteapi;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mrivanplays.siteapi.handlers.DefaultHandler;
-import com.mrivanplays.siteapi.utils.Utils;
-
-import java.io.InputStreamReader;
-
-import okhttp3.Call;
-import okhttp3.Request;
-import okhttp3.Response;
+import com.mrivanplays.siteapi.handlers.LibraryVersionHandler;
+import com.mrivanplays.siteapi.handlers.MemeHandler;
 
 import static spark.Spark.*;
 
@@ -44,30 +37,17 @@ public class Server {
         DefaultHandler defaultHandler = new DefaultHandler();
         notFound(defaultHandler);
 
-        get("/meme", (request, response) -> {
-            response.type("text");
-            response.status(200);
-
-            Request okhttpRequest = new Request.Builder()
-                    .url("https://reddit.com/r/meme/random.json")
-                    .header("User-Agent", Utils.userAgent)
-                    .build();
-            Call call = Utils.okHttpClient.newCall(okhttpRequest);
-            try (Response okHttpResponse = call.execute()) {
-
-                JsonNode node = Utils.objectMapper.readTree(new InputStreamReader(okHttpResponse.body().byteStream()));
-                ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-                jsonResponse.put("image", node.get(0).with("data").withArray("children").get(0).with("data").get("url").asText());
-
-                return jsonResponse.toString();
-            }
-        });
+        MemeHandler memeHandler = new MemeHandler();
+        get("/meme", memeHandler);
+        get("/meme/", memeHandler);
 
 //        SpigotDownloadHandler sdh = new SpigotDownloadHandler();
 //        get("/spigot/download/:id", sdh);
+//        get("/spigot/download/:id/", sdh);
 
-//        LibraryVersionHandler lvh = new LibraryVersionHandler();
-//        get("/library/version/:id", lvh);
+        LibraryVersionHandler lvh = new LibraryVersionHandler();
+        get("/library/version/:id", lvh);
+        get("/library/version/:id/", lvh);
 
         get("/", defaultHandler);
 

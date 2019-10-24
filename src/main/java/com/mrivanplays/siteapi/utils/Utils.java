@@ -32,46 +32,54 @@ import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
+import okhttp3.Call;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 public class Utils {
 
     public static String userAgent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1";
     public static ObjectMapper objectMapper;
     public static OkHttpClient okHttpClient;
+    public static ScheduledExecutorService executor;
+    public static int ratelimitErrorCode = 88;
 
     static {
         objectMapper = new ObjectMapper();
         okHttpClient = new OkHttpClient();
+        executor = Executors.newScheduledThreadPool(2);
     }
 
     public static List<HttpCookie> getCookies(String urlName) {
-        List<HttpCookie> cookies;
         try {
             CookieManager manager = new CookieManager();
             manager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
             CookieHandler.setDefault(manager);
 
             URL url = new URL(urlName);
-            HttpURLConnection connection = openConnection(url);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.addRequestProperty("User-Agent", userAgent);
             connection.getContent();
 
             CookieStore cookieJar = manager.getCookieStore();
-            cookies = cookieJar.getCookies();
-        } catch (Exception e) {
+            return cookieJar.getCookies();
+        } catch (IOException e) {
             e.printStackTrace();
-            return null;
+            return Collections.emptyList();
         }
-
-        return cookies;
     }
 
-    public static HttpURLConnection openConnection(URL url) throws IOException  {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-        connection.addRequestProperty("User-Agent", userAgent);
-        return connection;
+    public static Call request(String url) {
+        Request request = new Request.Builder()
+                .url(url)
+                .header("User-Agent", userAgent)
+                .build();
+        return okHttpClient.newCall(request);
     }
 }
