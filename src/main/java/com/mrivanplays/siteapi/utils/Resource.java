@@ -20,29 +20,23 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 */
-package com.mrivanplays.siteapi.handlers;
+package com.mrivanplays.siteapi.utils;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
+public class Resource {
 
-import spark.Request;
-import spark.Response;
-import spark.Route;
+    private String downloadUrl;
+    private ResourceInfo resourceInfo;
 
-public class DefaultHandler implements Route {
+    public Resource(String downloadUrl, ResourceInfo resourceInfo) {
+        this.downloadUrl = downloadUrl;
+        this.resourceInfo = resourceInfo;
+    }
 
-    @Override
-    public Object handle(Request request, Response response) throws Exception {
-        response.type("text/html");
-        response.status(200);
-        StringBuilder bean = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(getClass().getClassLoader().getResourceAsStream("default-page.html")))) {
-            for (String line : reader.lines().collect(Collectors.toList())) {
-                bean.append(line).append("\n");
-            }
-        }
-        return bean.toString();
+    public String getDownloadUrl() {
+        return downloadUrl;
+    }
+
+    public ResourceInfo getResourceInfo() {
+        return resourceInfo;
     }
 }

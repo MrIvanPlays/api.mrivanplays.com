@@ -44,6 +44,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 
 public class Utils {
 
@@ -87,9 +88,31 @@ public class Utils {
         return okHttpClient.newCall(request);
     }
 
+    public static ResourceInfo resourceInfo(String spigotId) throws IOException {
+        Call call = call("https://spigotmc.org/resources/" + spigotId);
+        try (Response response = call.execute()) {
+            Document document = Jsoup.parse(response.body().string());
+            Element name = document.selectFirst("h1");
+            return new ResourceInfo(name.text(), spigotId);
+        }
+    }
+
+    public static Resource resource(String spigotId) throws IOException {
+        Call call = call("https://spigotmc.org/resources/" + spigotId);
+        try (Response response = call.execute()) {
+            Document document = Jsoup.parse(response.body().string());
+            Element redirect = document.selectFirst("a.inner[href]");
+            Element name = document.selectFirst("h1");
+            return new Resource(("https://spigotmc.org/" + redirect.attr("href")), new ResourceInfo(name.text(), spigotId));
+        }
+    }
+
     public static String downloadLink(String spigotId) throws IOException {
-        Document document = Jsoup.connect("https://spigotmc.org/resources/" + spigotId).userAgent(Utils.userAgent).get();
-        Element redirect = document.select("a.inner[href]").first();
-        return "https://spigotmc.org/" + redirect.attr("href");
+        Call call = call("https://spigotmc.org/resources/" + spigotId);
+        try (Response response = call.execute()) {
+            Document document = Jsoup.parse(response.body().string());
+            Element redirect = document.selectFirst("a.inner[href]");
+            return "https://spigotmc.org/" + redirect.attr("href");
+        }
     }
 }

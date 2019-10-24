@@ -27,6 +27,8 @@ import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.util.Cookie;
+import com.mrivanplays.siteapi.utils.Resource;
+import com.mrivanplays.siteapi.utils.ResourceInfo;
 import com.mrivanplays.siteapi.utils.Utils;
 
 import java.io.BufferedOutputStream;
@@ -42,7 +44,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.servlet.ServletOutputStream;
 
 import spark.Request;
@@ -98,17 +99,23 @@ public class SpigotDownloadHandler implements Route {
         requestGoingOn = true;
         String resourceId = request.params(":id");
         response.type("application/octec-stream");
-        response.header("Content-Disposition", "attachment;filename=" + resourceId + ".jar");
         response.status(200);
 
         File file = new File(JarUpdateChecker.jarsFolder, resourceId + ".jar");
         if (!file.exists()) {
             file.createNewFile();
-            try (InputStream in = getInputStream(Utils.downloadLink(resourceId))) {
+            Resource resource = Utils.resource(resourceId);
+            try (InputStream in = getInputStream(resource.getDownloadUrl())) {
                 try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
                     write(in, out);
                 }
             }
+            String nameFormat = String.format("%s#%s.jar", resource.getResourceInfo().getName(), resourceId);
+            response.header("Content-Disposition", "attachment;filename=" + nameFormat);
+        } else {
+            ResourceInfo resourceInfo = Utils.resourceInfo(resourceId);
+            String nameFormat = String.format("%s#%s.jar", resourceInfo.getName(), resourceId);
+            response.header("Content-Disposition", "attachment;filename=" + nameFormat);
         }
 
         try (ServletOutputStream out = response.raw().getOutputStream()) {
