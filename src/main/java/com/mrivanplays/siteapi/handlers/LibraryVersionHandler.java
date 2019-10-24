@@ -47,7 +47,7 @@ public class LibraryVersionHandler implements Route {
 
         String dependency = request.params(":id");
 
-        Call call = Utils.request("https://repo.mrivanplays.com/repository/ivan/com/mrivanplays/" + dependency + "/maven-metadata.xml");
+        Call call = Utils.call("https://repo.mrivanplays.com/repository/ivan/com/mrivanplays/" + dependency + "/maven-metadata.xml");
         try (okhttp3.Response okHttpResponse = call.execute()) {
             if (okHttpResponse.code() == 404) {
                 response.status(404);

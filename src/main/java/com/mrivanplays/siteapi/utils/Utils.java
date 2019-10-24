@@ -24,6 +24,10 @@ package com.mrivanplays.siteapi.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -75,11 +79,17 @@ public class Utils {
         }
     }
 
-    public static Call request(String url) {
+    public static Call call(String url) {
         Request request = new Request.Builder()
                 .url(url)
                 .header("User-Agent", userAgent)
                 .build();
         return okHttpClient.newCall(request);
+    }
+
+    public static String downloadLink(String spigotId) throws IOException {
+        Document document = Jsoup.connect("https://spigotmc.org/resources/" + spigotId).userAgent(Utils.userAgent).get();
+        Element redirect = document.select("a.inner[href]").first();
+        return "https://spigotmc.org/" + redirect.attr("href");
     }
 }

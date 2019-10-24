@@ -32,20 +32,18 @@
     <h3>It looks like you've hit a request which doesn't exist or typed only "api.mrivanplays.com".
         That's why we're listing all available requests down bellow</h3>
     <p>
-        https://api.mrivanplays.com/spigot/download/[resource id] - <b>TEMPORARILY DISABLED</b> -
-        downloads the <a href="https://spigotmc.org">spigot</a> resource with the specified id (latest version).
-        This is a thread-blocking request! Run it always on asynchronous threads. - <b>TEMPORARILY DISABLED</b>
+        https://api.mrivanplays.com/spigot/download/[resource id] - downloads the <a href="https://spigotmc.org">spigot</a>
+        resource with the specified id (latest version). This is a thread-blocking request! Run it always on asynchronous threads.
     </p>
     <p>
         <a href="https://api.mrivanplays.com/meme">https://api.mrivanplays.com/meme</a> - gets a random meme
-        from <a href="https://reddit.com/r/meme">reddit</a>. Returned content is a json string with a link to the image.
-        This API has a rate limit of 100 requests per minute! If you make more than 100 requests, you will be faced with
-        error code 88 for being rate limited and success boolean false.
+        from <a href="https://reddit.com/r/meme">reddit</a>. Returned content is a json string with a link to the image and
+        a success boolean. Rate limit: 100 request/minute ; rate limited error code: 88
     </p>
     <p>
         https://api.mrivanplays.com/library/version/[library name] - Shows the version of the specified library, which have been
         uploaded to <a href="https://repo.mrivanplays.com">https://repo.mrivanplays.com</a>. The returned content is a json string
-        with a success boolean. If the success boolean is false, this is because of a 404 not found.
+        with a version string and a success boolean.
     </p>
 </div>
 </body>

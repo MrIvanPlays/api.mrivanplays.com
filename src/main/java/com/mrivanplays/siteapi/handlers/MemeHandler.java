@@ -54,6 +54,7 @@ public class MemeHandler implements Route {
     public Object handle(Request request, Response response) throws Exception {
         response.type("text");
 
+        // todo: rate limit not working, should be fixed
         MemeRequestsData memeRequestsData = get(request.ip());
         LocalTime timeNow = LocalTime.now();
         if (memeRequestsData.existed) {
@@ -78,7 +79,7 @@ public class MemeHandler implements Route {
             }
         }
 
-        Call call = Utils.request("https://reddit.com/r/meme/random.json");
+        Call call = Utils.call("https://reddit.com/r/meme/random.json");
         try (okhttp3.Response okHttpResponse = call.execute()) {
             response.status(200);
 

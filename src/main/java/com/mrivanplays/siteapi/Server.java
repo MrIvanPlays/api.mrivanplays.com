@@ -25,6 +25,7 @@ package com.mrivanplays.siteapi;
 import com.mrivanplays.siteapi.handlers.DefaultHandler;
 import com.mrivanplays.siteapi.handlers.LibraryVersionHandler;
 import com.mrivanplays.siteapi.handlers.MemeHandler;
+import com.mrivanplays.siteapi.handlers.spigotdownload.SpigotDownloadHandler;
 
 import static spark.Spark.*;
 
@@ -41,9 +42,9 @@ public class Server {
         get("/meme", memeHandler);
         get("/meme/", memeHandler);
 
-//        SpigotDownloadHandler sdh = new SpigotDownloadHandler();
-//        get("/spigot/download/:id", sdh);
-//        get("/spigot/download/:id/", sdh);
+        SpigotDownloadHandler sdh = new SpigotDownloadHandler();
+        get("/spigot/download/:id", sdh);
+        get("/spigot/download/:id/", sdh);
 
         LibraryVersionHandler lvh = new LibraryVersionHandler();
         get("/library/version/:id", lvh);
