@@ -47,14 +47,37 @@ public class LibraryVersionHandler implements Route {
 
         String dependency = request.params(":id");
 
-        Call call = Utils.call("https://repo.mrivanplays.com/repository/ivan/com/mrivanplays/" + dependency + "/maven-metadata.xml");
+        String repoUrl = request.queryParams("repoUrl");
+        if (repoUrl == null) {
+            repoUrl = "https://repo.mrivanplays.com/repository/ivan/";
+        }
+        if (repoUrl.equalsIgnoreCase("mavenCentral")) {
+            repoUrl = "https://repo1.maven.org/maven2/";
+        }
+
+        String rawGroupId = request.queryParams("groupId");
+        if (rawGroupId == null) {
+            rawGroupId = "com/mrivanplays";
+        }
+
+        String rawParam = request.queryParams("raw");
+        boolean raw = false;
+        if (rawParam != null) {
+            raw = Boolean.parseBoolean(rawParam);
+        }
+
+        String groupId = rawGroupId.replace(".", "/") + "/";
+
+        String requestUrl = repoUrl + groupId + dependency + "/maven-metadata.xml";
+
+        Call call = Utils.call(requestUrl);
         try (okhttp3.Response okHttpResponse = call.execute()) {
             if (okHttpResponse.code() == 404) {
                 response.status(404);
                 ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
                 objectNode.put("success", false);
                 objectNode.put("error", 404);
-                objectNode.put("message", "Dependency not found on nexus");
+                objectNode.put("message", "Dependency not found");
                 return objectNode.toString();
             }
 
@@ -68,7 +91,10 @@ public class LibraryVersionHandler implements Route {
                 }
                 String buffer = bufferBuilder.toString();
                 Document document = Jsoup.parse(buffer);
-                Element version = document.selectFirst("version");
+                Element version = document.selectFirst("latest");
+                if (raw) {
+                    return version.text();
+                }
                 ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
                 objectNode.put("success", true);
                 objectNode.put("version", version.text());

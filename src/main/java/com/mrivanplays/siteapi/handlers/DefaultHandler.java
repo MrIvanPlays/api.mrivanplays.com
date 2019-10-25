@@ -23,6 +23,7 @@
 package com.mrivanplays.siteapi.handlers;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
@@ -36,9 +37,22 @@ public class DefaultHandler implements Route {
     public Object handle(Request request, Response response) throws Exception {
         response.type("text/html");
         response.status(200);
+
+        String blackParam = request.queryParams("black");
+        boolean black = false;
+        if (blackParam != null) {
+            black = Boolean.parseBoolean(blackParam);
+        }
+
+        InputStream in;
+        if (black) {
+            in = getClass().getClassLoader().getResourceAsStream("default-page-black.html");
+        } else {
+            in = getClass().getClassLoader().getResourceAsStream("default-page.html");
+        }
+
         StringBuilder bean = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(getClass().getClassLoader().getResourceAsStream("default-page.html")))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
             for (String line : reader.lines().collect(Collectors.toList())) {
                 bean.append(line).append("\n");
             }
