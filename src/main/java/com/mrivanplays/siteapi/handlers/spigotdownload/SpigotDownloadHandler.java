@@ -22,25 +22,30 @@
 */
 package com.mrivanplays.siteapi.handlers.spigotdownload;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.HttpMethod;
+import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebRequest;
+import com.gargoylesoftware.htmlunit.WebResponse;
 import com.gargoylesoftware.htmlunit.util.Cookie;
 import com.mrivanplays.siteapi.utils.Resource;
-import com.mrivanplays.siteapi.utils.ResourceInfo;
 import com.mrivanplays.siteapi.utils.Utils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.net.HttpCookie;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -98,23 +103,66 @@ public class SpigotDownloadHandler implements Route {
     public Object handle(Request request, Response response) throws Exception {
         requestGoingOn = true;
         String resourceId = request.params(":id");
+        try {
+            Integer.parseInt(resourceId);
+        } catch (NumberFormatException e) {
+            response.status(404);
+            response.type("text");
+            ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
+            jsonResponse.put("error", 404);
+            jsonResponse.put("message", "Invalid resource id '" + resourceId + "'");
+
+            return jsonResponse.toString();
+        }
+
+        Resource resource = Utils.resource(resourceId);
+        if (resource == null) {
+            response.status(404);
+            response.type("text");
+            ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
+            jsonResponse.put("error", 404);
+            jsonResponse.put("message", "Resource cannot be found on spigot");
+
+            return jsonResponse.toString();
+        }
+        if (resource.getFileType().equalsIgnoreCase("Via external site")) {
+            response.status(403);
+            response.type("text");
+            ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
+            jsonResponse.put("error", 403);
+            jsonResponse.put("message", "Cannot download resource which has external download link.");
+
+            return jsonResponse.toString();
+        }
         response.type("application/octec-stream");
         response.status(200);
-
-        File file = new File(JarUpdateChecker.jarsFolder, resourceId + ".jar");
+        File rjFile = new File(JarUpdateChecker.jarsFolder, resourceId + ".json");
+        Map<String, String> resourceJson = Utils.readResourceJsonIfExisting(rjFile);
+        File file;
+        if (resourceJson.isEmpty()) {
+            file = new File(JarUpdateChecker.jarsFolder, resourceId + resource.getFileType());
+        } else {
+            file = new File(JarUpdateChecker.jarsFolder, resourceId + resourceJson.get("fileType"));
+        }
         if (!file.exists()) {
             file.createNewFile();
-            Resource resource = Utils.resource(resourceId);
             try (InputStream in = getInputStream(resource.getDownloadUrl())) {
                 try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
                     write(in, out);
                 }
             }
-            String nameFormat = String.format("%s#%s.jar", resource.getResourceInfo().getName(), resourceId);
+            rjFile.createNewFile();
+            ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
+            objectNode.put("name", resource.getName());
+            objectNode.put("fileType", resource.getFileType());
+            objectNode.put("version", resource.getVersion());
+            try (Writer writer = new FileWriter(rjFile)) {
+                writer.write(objectNode.toString());
+            }
+            String nameFormat = String.format("%s#%s%s", resource.getName(), resourceId, resource.getFileType());
             response.header("Content-Disposition", "attachment;filename=" + nameFormat);
         } else {
-            ResourceInfo resourceInfo = Utils.resourceInfo(resourceId);
-            String nameFormat = String.format("%s#%s.jar", resourceInfo.getName(), resourceId);
+            String nameFormat = String.format("%s#%s%s", resourceJson.get("name"), resourceId, resourceJson.get("fileType"));
             response.header("Content-Disposition", "attachment;filename=" + nameFormat);
         }
 
@@ -124,6 +172,7 @@ public class SpigotDownloadHandler implements Route {
             }
         }
         requestGoingOn = false;
+        resourceJson.clear(); // free some memory
 
         return null;
     }

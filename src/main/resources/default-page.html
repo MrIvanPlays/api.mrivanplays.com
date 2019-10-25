@@ -34,6 +34,8 @@
     <p>
         https://api.mrivanplays.com/spigot/download/[resource id] - downloads the <a href="https://spigotmc.org">spigot</a>
         resource with the specified id (latest version). This is a thread-blocking request! Run it always on asynchronous threads.
+        If the resource id isn't a integer, a 404 error is being returned with a json string response. If the resource doesn't exist
+        on spigot, a 404 error is being returned with a json string response.
     </p>
     <p>
         <a href="https://api.mrivanplays.com/meme">https://api.mrivanplays.com/meme</a> - gets a random meme

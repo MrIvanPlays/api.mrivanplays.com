@@ -27,13 +27,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mrivanplays.siteapi.utils.Utils;
 
 import java.io.InputStreamReader;
-import java.time.Duration;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+//import java.time.Duration;
+//import java.time.LocalTime;
+//import java.util.ArrayList;
+//import java.util.List;
+//import java.util.Optional;
+//import java.util.concurrent.ScheduledExecutorService;
+//import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import spark.Request;
@@ -42,12 +42,12 @@ import spark.Route;
 
 public class MemeHandler implements Route {
 
-    private List<MemeRequests> requests;
-    private ScheduledExecutorService executor;
+//    private List<MemeRequests> requests;
+//    private ScheduledExecutorService executor;
 
     public MemeHandler() {
-        requests = new ArrayList<>();
-        executor = Utils.executor;
+//        requests = new ArrayList<>();
+//        executor = Utils.executor;
     }
 
     @Override
@@ -55,29 +55,29 @@ public class MemeHandler implements Route {
         response.type("text");
 
         // todo: rate limit not working, should be fixed
-        MemeRequestsData memeRequestsData = get(request.ip());
-        LocalTime timeNow = LocalTime.now();
-        if (memeRequestsData.existed) {
-            MemeRequests memeRequests = memeRequestsData.request;
-            Duration duration = Duration.between(memeRequests.firstRequestAt, timeNow);
-            if (duration.toMinutes() < 1) {
-                if (memeRequests.requestsLastMinute == 100) {
-                    response.status(Utils.ratelimitErrorCode);
-                    long tryAgainAfter = (60 - duration.getSeconds()) + 2;
-                    ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-                    jsonResponse.put("success", false);
-                    jsonResponse.put("error", Utils.ratelimitErrorCode);
-                    jsonResponse.put("message", "Rate limit for a minute exceeded. Try again after " + tryAgainAfter + " seconds.");
-
-                    return jsonResponse.toString();
-                } else {
-                    requests.remove(memeRequests);
-                    int requestsLastMinute = memeRequests.requestsLastMinute;
-                    memeRequests.requestsLastMinute = requestsLastMinute + 1;
-                    requests.add(memeRequests);
-                }
-            }
-        }
+//        MemeRequestsData memeRequestsData = get(request.ip());
+//        LocalTime timeNow = LocalTime.now();
+//        if (memeRequestsData.existed) {
+//            MemeRequests memeRequests = memeRequestsData.request;
+//            Duration duration = Duration.between(memeRequests.firstRequestAt, timeNow);
+//            if (duration.toMinutes() < 1) {
+//                if (memeRequests.requestsLastMinute == 100) {
+//                    response.status(Utils.ratelimitErrorCode);
+//                    long tryAgainAfter = (60 - duration.getSeconds()) + 2;
+//                    ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
+//                    jsonResponse.put("success", false);
+//                    jsonResponse.put("error", Utils.ratelimitErrorCode);
+//                    jsonResponse.put("message", "Rate limit for a minute exceeded. Try again after " + tryAgainAfter + " seconds.");
+//
+//                    return jsonResponse.toString();
+//                } else {
+//                    requests.remove(memeRequests);
+//                    int requestsLastMinute = memeRequests.requestsLastMinute;
+//                    memeRequests.requestsLastMinute = requestsLastMinute + 1;
+//                    requests.add(memeRequests);
+//                }
+//            }
+//        }
 
         Call call = Utils.call("https://reddit.com/r/meme/random.json");
         try (okhttp3.Response okHttpResponse = call.execute()) {
@@ -92,40 +92,40 @@ public class MemeHandler implements Route {
         }
     }
 
-    private MemeRequestsData get(String ip) {
-        Optional<MemeRequests> search = requests.stream().filter(request -> request.ip.equalsIgnoreCase(ip)).findFirst();
-        if (search.isPresent()) {
-            return new MemeRequestsData(true, search.get());
-        } else {
-            MemeRequests request = new MemeRequests(ip, 1, LocalTime.now());
-            requests.add(request);
-            executor.schedule(() -> {
-                MemeRequests newRequest = requests.stream().filter(r -> r.ip.equalsIgnoreCase(ip)).findFirst().get();
-                requests.remove(newRequest);
-            }, 1, TimeUnit.MINUTES);
-            return new MemeRequestsData(false, request);
-        }
-    }
-
-    private static class MemeRequests {
-        String ip;
-        int requestsLastMinute;
-        LocalTime firstRequestAt;
-
-        MemeRequests(String ip, int requestsLastMinute, LocalTime firstRequestAt) {
-            this.ip = ip;
-            this.requestsLastMinute = requestsLastMinute;
-            this.firstRequestAt = firstRequestAt;
-        }
-    }
-
-    private static class MemeRequestsData {
-        boolean existed;
-        MemeRequests request;
-
-        MemeRequestsData(boolean existed, MemeRequests request) {
-            this.existed = existed;
-            this.request = request;
-        }
-    }
+//    private MemeRequestsData get(String ip) {
+//        Optional<MemeRequests> search = requests.stream().filter(request -> request.ip.equalsIgnoreCase(ip)).findFirst();
+//        if (search.isPresent()) {
+//            return new MemeRequestsData(true, search.get());
+//        } else {
+//            MemeRequests request = new MemeRequests(ip, 1, LocalTime.now());
+//            requests.add(request);
+//            executor.schedule(() -> {
+//                MemeRequests newRequest = requests.stream().filter(r -> r.ip.equalsIgnoreCase(ip)).findFirst().get();
+//                requests.remove(newRequest);
+//            }, 1, TimeUnit.MINUTES);
+//            return new MemeRequestsData(false, request);
+//        }
+//    }
+//
+//    private static class MemeRequests {
+//        String ip;
+//        int requestsLastMinute;
+//        LocalTime firstRequestAt;
+//
+//        MemeRequests(String ip, int requestsLastMinute, LocalTime firstRequestAt) {
+//            this.ip = ip;
+//            this.requestsLastMinute = requestsLastMinute;
+//            this.firstRequestAt = firstRequestAt;
+//        }
+//    }
+//
+//    private static class MemeRequestsData {
+//        boolean existed;
+//        MemeRequests request;
+//
+//        MemeRequestsData(boolean existed, MemeRequests request) {
+//            this.existed = existed;
+//            this.request = request;
+//        }
+//    }
 }

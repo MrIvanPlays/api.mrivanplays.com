@@ -22,14 +22,19 @@
 */
 package com.mrivanplays.siteapi.handlers.spigotdownload;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mrivanplays.siteapi.utils.Resource;
 import com.mrivanplays.siteapi.utils.Utils;
+import com.mrivanplays.siteapi.handlers.spigotdownload.JarUpdateChecker.UpdateResponse;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.util.List;
 
 public class UpdateCheckRunnable implements Runnable {
@@ -45,12 +50,35 @@ public class UpdateCheckRunnable implements Runnable {
     @Override
     public void run() {
         try {
-            List<String> updateNeeded = updateChecker.checkForUpdates();
-            for (String fileName : updateNeeded) {
-                File file = new File(JarUpdateChecker.jarsFolder, fileName + ".jar");
-                file.delete();
+            List<UpdateResponse> updateNeeded = updateChecker.checkForUpdates();
+            for (UpdateResponse response : updateNeeded) {
+                String resourceId = response.getResourceId();
+                Resource resource = Utils.resource(resourceId);
+                if (resource.getFileType().equalsIgnoreCase("Via external site")) {
+                    response.getFile().delete();
+                    return;
+                }
+                File file;
+                if (!resource.getFileType().equalsIgnoreCase(response.getFileType())) {
+                    response.getFile().delete();
+                    file = new File(JarUpdateChecker.jarsFolder, resourceId + resource.getFileType());
+                } else {
+                    File responseFile = response.getFile();
+                    responseFile.delete();
+                    file = responseFile;
+                }
                 file.createNewFile();
-                try (InputStream in = spigotDownloadHandler.getInputStream(Utils.downloadLink(fileName))) {
+                File resourceJsonFile = response.getResourceJsonFile();
+                resourceJsonFile.delete();
+                resourceJsonFile.createNewFile();
+                ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
+                objectNode.put("name", resource.getName());
+                objectNode.put("fileType", resource.getFileType());
+                objectNode.put("version", resource.getVersion());
+                try (Writer writer = new FileWriter(resourceJsonFile)) {
+                    writer.write(objectNode.toString());
+                }
+                try (InputStream in = spigotDownloadHandler.getInputStream(resource.getDownloadUrl())) {
                     try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
                         spigotDownloadHandler.write(in, out);
                     }

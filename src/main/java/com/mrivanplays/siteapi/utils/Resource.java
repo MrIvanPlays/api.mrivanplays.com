@@ -25,18 +25,36 @@ package com.mrivanplays.siteapi.utils;
 public class Resource {
 
     private String downloadUrl;
-    private ResourceInfo resourceInfo;
+    private String resourceId;
+    private String version;
+    private String fileType;
+    private String name;
 
-    public Resource(String downloadUrl, ResourceInfo resourceInfo) {
+    public Resource(String downloadUrl, String resourceId, String version, String fileType, String name) {
         this.downloadUrl = downloadUrl;
-        this.resourceInfo = resourceInfo;
+        this.resourceId = resourceId;
+        this.version = version;
+        this.fileType = fileType;
+        this.name = name;
     }
 
     public String getDownloadUrl() {
         return downloadUrl;
     }
 
-    public ResourceInfo getResourceInfo() {
-        return resourceInfo;
+    public String getResourceId() {
+        return resourceId;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public String getFileType() {
+        return fileType;
+    }
+
+    public String getName() {
+        return name;
     }
 }

@@ -30,9 +30,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.Response;
@@ -40,8 +38,6 @@ import okhttp3.Response;
 public class JarUpdateChecker {
 
     public static File jarsFolder = new File("./usr/share/nginx/siteapi/spigotdownload/");
-
-    private final String requestURL = "https://api.spigotmc.org/legacy/update.php?resource=%s";
 
     public JarUpdateChecker() {
         if (!jarsFolder.exists()) {
@@ -52,51 +48,61 @@ public class JarUpdateChecker {
     /**
      * @return all jars that should be updated
      */
-    public List<String> checkForUpdates() throws IOException {
-        List<String> updateNeeded = new ArrayList<>();
-        File[] files = jarsFolder.listFiles((dir, name) -> name.endsWith(".jar"));
+    public List<UpdateResponse> checkForUpdates() throws IOException {
+        List<UpdateResponse> updateNeeded = new ArrayList<>();
+        File[] files = jarsFolder.listFiles((dir, name) -> name.endsWith(".jar") || name.endsWith(".zip"));
         if (files == null || files.length == 0) {
             return updateNeeded; // empty list
         }
         for (File file : files) {
-            String id = file.getName().replace(".jar", "");
+            String fullName = file.getName();
+            String fileType = fullName.substring(fullName.indexOf('.') + 1);
+            String id = fullName.replace(fileType, "");
+            String requestURL = "https://api.spigotmc.org/legacy/update.php?resource=%s";
             Call call = Utils.call(String.format(requestURL, id));
             try (Response response = call.execute()) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(response.body().byteStream()));
-                String spigotVersion = reader.readLine();
+                String spigotVersion = reader.readLine().replace(" ", "");
                 reader.close();
-                String jarVersion = retrieveJarVersion(file);
-                if (jarVersion.equalsIgnoreCase("exec file delete")) {
-                    file.delete();
-                    continue;
-                }
+                File resourceJsonFile = new File(jarsFolder, id + ".json");
+                Map<String, String> resourceJson = Utils.readResourceJsonIfExisting(resourceJsonFile);
+                String jarVersion = resourceJson.get("version");
                 if (!jarVersion.equalsIgnoreCase(spigotVersion)) {
-                    updateNeeded.add(id);
+                    updateNeeded.add(new UpdateResponse(file, resourceJsonFile, id, fileType));
                 }
             }
         }
         return updateNeeded;
     }
 
-    private String retrieveJarVersion(File file) throws IOException {
-        JarFile jar = new JarFile(file);
-        JarEntry pluginDotYml = jar.getJarEntry("plugin.yml");
-        if (pluginDotYml == null) {
-            // not a plugin (perhaps skript or a standalone program), delete the file
-            return "exec file delete";
+    public static class UpdateResponse {
+
+        private File file;
+        private File resourceJsonFile;
+        private String fileType;
+        private String resourceId;
+
+        public UpdateResponse(File file, File resourceJsonFile, String fileType, String resourceId) {
+            this.file = file;
+            this.fileType = fileType;
+            this.resourceJsonFile = resourceJsonFile;
+            this.resourceId = resourceId;
         }
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(jar.getInputStream(pluginDotYml)))) {
-            List<String> lines = reader.lines().collect(Collectors.toList());
-            String version = "";
-            for (String line : lines) {
-                String[] split = line.split(":");
-                if (split[0].equalsIgnoreCase("version")) {
-                    version = split[1];
-                    break;
-                }
-            }
-            lines.clear();
-            return version;
+
+        public File getFile() {
+            return file;
+        }
+
+        public File getResourceJsonFile() {
+            return resourceJsonFile;
+        }
+
+        public String getFileType() {
+            return fileType;
+        }
+
+        public String getResourceId() {
+            return resourceId;
         }
     }
 }

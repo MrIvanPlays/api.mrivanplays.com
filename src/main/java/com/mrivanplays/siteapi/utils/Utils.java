@@ -22,12 +22,14 @@
 */
 package com.mrivanplays.siteapi.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -37,9 +39,12 @@ import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -48,16 +53,18 @@ import okhttp3.Response;
 
 public class Utils {
 
-    public static String userAgent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1";
+    private static String userAgent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1";
+    private static OkHttpClient okHttpClient;
+    private static final Pattern nameSplitPattern = Pattern.compile("\\|");
     public static ObjectMapper objectMapper;
-    public static OkHttpClient okHttpClient;
     public static ScheduledExecutorService executor;
-    public static int ratelimitErrorCode = 88;
+    public static final int ratelimitErrorCode = 88;
+
 
     static {
-        objectMapper = new ObjectMapper();
         okHttpClient = new OkHttpClient();
-        executor = Executors.newScheduledThreadPool(2);
+        objectMapper = new ObjectMapper();
+        executor = Executors.newSingleThreadScheduledExecutor();
     }
 
     public static List<HttpCookie> getCookies(String urlName) {
@@ -88,31 +95,39 @@ public class Utils {
         return okHttpClient.newCall(request);
     }
 
-    public static ResourceInfo resourceInfo(String spigotId) throws IOException {
-        Call call = call("https://spigotmc.org/resources/" + spigotId);
-        try (Response response = call.execute()) {
-            Document document = Jsoup.parse(response.body().string());
-            Element name = document.selectFirst("h1");
-            return new ResourceInfo(name.text(), spigotId);
-        }
-    }
-
     public static Resource resource(String spigotId) throws IOException {
         Call call = call("https://spigotmc.org/resources/" + spigotId);
         try (Response response = call.execute()) {
+            if (response.code() == 404) {
+                return null;
+            }
             Document document = Jsoup.parse(response.body().string());
             Element redirect = document.selectFirst("a.inner[href]");
+            String downloadUrl = "https://spigotmc.org/" + redirect.attr("href");
             Element name = document.selectFirst("h1");
-            return new Resource(("https://spigotmc.org/" + redirect.attr("href")), new ResourceInfo(name.text(), spigotId));
+            String nameText = name.text();
+            String[] nameSplit = nameSplitPattern.split(nameText);
+            String version = nameSplit[nameSplit.length - 1].replace(" ", "");
+            String sizeAndType = redirect.text().replace("Download Now ", "");
+            if (sizeAndType.equalsIgnoreCase("Via external site")) {
+                return new Resource(downloadUrl, spigotId, version, sizeAndType, nameText);
+            }
+            String type = sizeAndType.split(" ")[2];
+            return new Resource(downloadUrl, spigotId, version, type, nameText);
         }
     }
 
-    public static String downloadLink(String spigotId) throws IOException {
-        Call call = call("https://spigotmc.org/resources/" + spigotId);
-        try (Response response = call.execute()) {
-            Document document = Jsoup.parse(response.body().string());
-            Element redirect = document.selectFirst("a.inner[href]");
-            return "https://spigotmc.org/" + redirect.attr("href");
+    public static Map<String, String> readResourceJsonIfExisting(File file) throws IOException {
+        Map<String, String> map = new HashMap<>();
+        if (file.exists()) {
+            JsonNode read = Utils.objectMapper.readTree(file);
+            String name = read.findValuesAsText("name").get(0);
+            String fileType = read.findValuesAsText("fileType").get(0);
+            String version = read.findValuesAsText("version").get(0);
+            map.put("name", name);
+            map.put("fileType", fileType);
+            map.put("version", version);
         }
+        return map;
     }
 }
