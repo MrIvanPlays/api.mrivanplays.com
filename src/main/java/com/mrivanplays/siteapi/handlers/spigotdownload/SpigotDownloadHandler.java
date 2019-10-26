@@ -136,6 +136,15 @@ public class SpigotDownloadHandler implements Route {
 
                 return jsonResponse.toString();
             }
+            if (resource.isPremium()) {
+                response.status(403);
+                response.type("text");
+                ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
+                jsonResponse.put("error", 403);
+                jsonResponse.put("message", "Resource is premium");
+
+                return jsonResponse.toString();
+            }
             if (resource.getFileType().equalsIgnoreCase("Via external site")) {
                 response.status(403);
                 response.type("text");
@@ -145,8 +154,7 @@ public class SpigotDownloadHandler implements Route {
 
                 return jsonResponse.toString();
             }
-            String name = resource.getName().replaceAll("/", "").replaceAll("\\\\", "")
-                    .replaceAll("\\|", "").replace(".", "").split(" ")[0];
+            String name = resource.getName();
             if (!nameMatcher.matcher(name).matches()) {
                 response.status(403);
                 response.type("text");

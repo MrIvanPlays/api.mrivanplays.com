@@ -29,6 +29,7 @@ public class Resource {
     private String version;
     private String fileType;
     private String name;
+    private boolean premium;
 
     public Resource(String downloadUrl, String resourceId, String version, String fileType, String name) {
         this.downloadUrl = downloadUrl;
@@ -36,6 +37,11 @@ public class Resource {
         this.version = version;
         this.fileType = fileType;
         this.name = name;
+    }
+
+    public Resource(boolean premium) {
+        this(null, null, null, null, null);
+        this.premium = premium;
     }
 
     public String getDownloadUrl() {
@@ -56,5 +62,9 @@ public class Resource {
 
     public String getName() {
         return name;
+    }
+
+    public boolean isPremium() {
+        return premium;
     }
 }

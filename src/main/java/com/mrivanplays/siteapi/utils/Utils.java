@@ -99,15 +99,21 @@ public class Utils {
             }
             Document document = Jsoup.parse(response.body().string());
             Element redirect = document.selectFirst("a.inner[href]");
+            if (redirect == null) {
+                return new Resource(true);
+            }
             String downloadUrl = "https://spigotmc.org/" + redirect.attr("href");
-            Element name = document.selectFirst("h1");
-            Element version = name.selectFirst("span.muted");
+            Element nameVar = document.selectFirst("h1");
+            String nameText = nameVar.text().replaceAll("/", "").replaceAll("\\\\", "")
+                    .replaceAll("\\|", "").replace(".", "").replace("-", "")
+                    .split(" ")[0];
+            Element version = nameVar.selectFirst("span.muted");
             String sizeAndType = redirect.text().replace("Download Now ", "");
             if (sizeAndType.equalsIgnoreCase("Via external site")) {
-                return new Resource(downloadUrl, spigotId, version.text(), sizeAndType, name.text());
+                return new Resource(downloadUrl, spigotId, version.text(), sizeAndType, nameText);
             }
             String type = sizeAndType.split(" ")[2];
-            return new Resource(downloadUrl, spigotId, version.text(), type, name.text());
+            return new Resource(downloadUrl, spigotId, version.text(), type, nameText);
         }
     }
 
