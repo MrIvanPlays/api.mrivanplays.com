@@ -23,10 +23,9 @@
 package com.mrivanplays.siteapi.handlers.spigotdownload;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mrivanplays.siteapi.handlers.spigotdownload.JarUpdateChecker.UpdateResponse;
 import com.mrivanplays.siteapi.utils.Resource;
 import com.mrivanplays.siteapi.utils.Utils;
-import com.mrivanplays.siteapi.handlers.spigotdownload.JarUpdateChecker.UpdateResponse;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,58 +38,59 @@ import java.util.List;
 
 public class UpdateCheckRunnable implements Runnable {
 
-    private JarUpdateChecker updateChecker;
-    private SpigotDownloadHandler spigotDownloadHandler;
+  private JarUpdateChecker updateChecker;
+  private SpigotDownloadHandler spigotDownloadHandler;
 
-    public UpdateCheckRunnable(JarUpdateChecker updateChecker, SpigotDownloadHandler spigotDownloadHandler) {
-        this.updateChecker = updateChecker;
-        this.spigotDownloadHandler = spigotDownloadHandler;
-    }
+  public UpdateCheckRunnable(
+      JarUpdateChecker updateChecker, SpigotDownloadHandler spigotDownloadHandler) {
+    this.updateChecker = updateChecker;
+    this.spigotDownloadHandler = spigotDownloadHandler;
+  }
 
-    @Override
-    public void run() {
-        try {
-            List<UpdateResponse> updateNeeded = updateChecker.checkForUpdates();
-            for (UpdateResponse response : updateNeeded) {
-                String resourceId = response.getResourceId();
-                Resource resource = Utils.resource(resourceId);
-                if (resource.getFileType().equalsIgnoreCase("Via external site")) {
-                    response.getFile().delete();
-                    return;
-                }
-                if (!spigotDownloadHandler.nameMatcher.matcher(resource.getName()).matches()) {
-                    response.getFile().delete();
-                    response.getResourceJsonFile().delete();
-                    return;
-                }
-                File file;
-                if (!resource.getFileType().equalsIgnoreCase(response.getFileType())) {
-                    response.getFile().delete();
-                    file = new File(JarUpdateChecker.jarsFolder, resourceId + resource.getFileType());
-                } else {
-                    File responseFile = response.getFile();
-                    responseFile.delete();
-                    file = responseFile;
-                }
-                file.createNewFile();
-                File resourceJsonFile = response.getResourceJsonFile();
-                resourceJsonFile.delete();
-                resourceJsonFile.createNewFile();
-                ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
-                objectNode.put("name", resource.getName());
-                objectNode.put("fileType", resource.getFileType());
-                objectNode.put("version", resource.getVersion());
-                try (Writer writer = new FileWriter(resourceJsonFile)) {
-                    writer.write(objectNode.toString());
-                }
-                try (InputStream in = spigotDownloadHandler.getInputStream(resource.getDownloadUrl())) {
-                    try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
-                        spigotDownloadHandler.write(in, out);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+  @Override
+  public void run() {
+    try {
+      List<UpdateResponse> updateNeeded = updateChecker.checkForUpdates();
+      for (UpdateResponse response : updateNeeded) {
+        String resourceId = response.getResourceId();
+        Resource resource = Utils.resource(resourceId);
+        if (resource.getFileType().equalsIgnoreCase("Via external site")) {
+          response.getFile().delete();
+          return;
         }
+        if (!spigotDownloadHandler.nameMatcher.matcher(resource.getName()).matches()) {
+          response.getFile().delete();
+          response.getResourceJsonFile().delete();
+          return;
+        }
+        File file;
+        if (!resource.getFileType().equalsIgnoreCase(response.getFileType())) {
+          response.getFile().delete();
+          file = new File(JarUpdateChecker.jarsFolder, resourceId + resource.getFileType());
+        } else {
+          File responseFile = response.getFile();
+          responseFile.delete();
+          file = responseFile;
+        }
+        file.createNewFile();
+        File resourceJsonFile = response.getResourceJsonFile();
+        resourceJsonFile.delete();
+        resourceJsonFile.createNewFile();
+        ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
+        objectNode.put("name", resource.getName());
+        objectNode.put("fileType", resource.getFileType());
+        objectNode.put("version", resource.getVersion());
+        try (Writer writer = new FileWriter(resourceJsonFile)) {
+          writer.write(objectNode.toString());
+        }
+        try (InputStream in = spigotDownloadHandler.getInputStream(resource.getDownloadUrl())) {
+          try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
+            spigotDownloadHandler.write(in, out);
+          }
+        }
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
     }
+  }
 }

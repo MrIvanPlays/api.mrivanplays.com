@@ -22,35 +22,37 @@
 */
 package com.mrivanplays.siteapi;
 
+import static spark.Spark.get;
+import static spark.Spark.initExceptionHandler;
+import static spark.Spark.notFound;
+import static spark.Spark.port;
+
 import com.mrivanplays.siteapi.handlers.DefaultHandler;
 import com.mrivanplays.siteapi.handlers.LibraryVersionHandler;
 import com.mrivanplays.siteapi.handlers.MemeHandler;
 import com.mrivanplays.siteapi.handlers.spigotdownload.SpigotDownloadHandler;
 
-import static spark.Spark.*;
-
 public class Server {
 
-    public static void main(String[] args) {
-        port(5858);
-        initExceptionHandler(Throwable::printStackTrace);
+  public static void main(String[] args) {
+    port(5858);
+    initExceptionHandler(Throwable::printStackTrace);
 
-        DefaultHandler defaultHandler = new DefaultHandler();
-        notFound(defaultHandler);
+    DefaultHandler defaultHandler = new DefaultHandler();
+    notFound(defaultHandler);
 
-        MemeHandler memeHandler = new MemeHandler();
-        get("/meme", memeHandler);
-        get("/meme/", memeHandler);
+    MemeHandler memeHandler = new MemeHandler();
+    get("/meme", memeHandler);
+    get("/meme/", memeHandler);
 
-        SpigotDownloadHandler sdh = new SpigotDownloadHandler();
-        get("/spigot/download/:id", sdh);
-        get("/spigot/download/:id/", sdh);
+    SpigotDownloadHandler sdh = new SpigotDownloadHandler();
+    get("/spigot/download/:id", sdh);
+    get("/spigot/download/:id/", sdh);
 
-        LibraryVersionHandler lvh = new LibraryVersionHandler();
-        get("/library/version/:id", lvh);
-        get("/library/version/:id/", lvh);
+    LibraryVersionHandler lvh = new LibraryVersionHandler();
+    get("/library/version/:id", lvh);
+    get("/library/version/:id/", lvh);
 
-        get("/", defaultHandler);
-
-    }
+    get("/", defaultHandler);
+  }
 }

@@ -25,9 +25,7 @@ package com.mrivanplays.siteapi.handlers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mrivanplays.siteapi.utils.Utils;
-
 import java.io.InputStreamReader;
-
 import okhttp3.Call;
 import spark.Request;
 import spark.Response;
@@ -35,18 +33,21 @@ import spark.Route;
 
 public class MemeHandler implements Route {
 
-    @Override
-    public Object handle(Request request, Response response) throws Exception {
-        response.type("text");
-        response.status(200);
+  @Override
+  public Object handle(Request request, Response response) throws Exception {
+    response.type("text");
+    response.status(200);
 
-        Call call = Utils.call("https://reddit.com/r/meme/random.json");
-        try (okhttp3.Response okHttpResponse = call.execute()) {
-            JsonNode node = Utils.objectMapper.readTree(new InputStreamReader(okHttpResponse.body().byteStream()));
-            ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-            jsonResponse.put("image", node.get(0).with("data").withArray("children").get(0).with("data").get("url").asText());
+    Call call = Utils.call("https://reddit.com/r/meme/random.json");
+    try (okhttp3.Response okHttpResponse = call.execute()) {
+      JsonNode node =
+          Utils.objectMapper.readTree(new InputStreamReader(okHttpResponse.body().byteStream()));
+      ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
+      jsonResponse.put(
+          "image",
+          node.get(0).with("data").withArray("children").get(0).with("data").get("url").asText());
 
-            return jsonResponse.toString();
-        }
+      return jsonResponse.toString();
     }
+  }
 }

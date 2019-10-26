@@ -24,47 +24,48 @@ package com.mrivanplays.siteapi.utils;
 
 public class Resource {
 
-    private String downloadUrl;
-    private String resourceId;
-    private String version;
-    private String fileType;
-    private String name;
-    private boolean premium;
+  private String downloadUrl;
+  private String resourceId;
+  private String version;
+  private String fileType;
+  private String name;
+  private boolean premium;
 
-    public Resource(String downloadUrl, String resourceId, String version, String fileType, String name) {
-        this.downloadUrl = downloadUrl;
-        this.resourceId = resourceId;
-        this.version = version;
-        this.fileType = fileType;
-        this.name = name;
-    }
+  public Resource(
+      String downloadUrl, String resourceId, String version, String fileType, String name) {
+    this.downloadUrl = downloadUrl;
+    this.resourceId = resourceId;
+    this.version = version;
+    this.fileType = fileType;
+    this.name = name;
+  }
 
-    public Resource(boolean premium) {
-        this(null, null, null, null, null);
-        this.premium = premium;
-    }
+  public Resource(boolean premium) {
+    this(null, null, null, null, null);
+    this.premium = premium;
+  }
 
-    public String getDownloadUrl() {
-        return downloadUrl;
-    }
+  public String getDownloadUrl() {
+    return downloadUrl;
+  }
 
-    public String getResourceId() {
-        return resourceId;
-    }
+  public String getResourceId() {
+    return resourceId;
+  }
 
-    public String getVersion() {
-        return version;
-    }
+  public String getVersion() {
+    return version;
+  }
 
-    public String getFileType() {
-        return fileType;
-    }
+  public String getFileType() {
+    return fileType;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public boolean isPremium() {
-        return premium;
-    }
+  public boolean isPremium() {
+    return premium;
+  }
 }
