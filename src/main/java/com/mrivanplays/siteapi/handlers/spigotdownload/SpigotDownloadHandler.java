@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import javax.servlet.ServletOutputStream;
 
 import spark.Request;
@@ -57,6 +58,7 @@ public class SpigotDownloadHandler implements Route {
 
     private WebClient webClient;
     private boolean requestGoingOn = false;
+    private final Pattern nameMatcher = Pattern.compile("[a-zA-Z0-9]+");
 
     public SpigotDownloadHandler() {
         webClient = new WebClient(BrowserVersion.CHROME);
@@ -113,54 +115,64 @@ public class SpigotDownloadHandler implements Route {
             return jsonResponse.toString();
         }
 
-        Resource resource = Utils.resource(resourceId);
-        if (resource == null) {
-            response.status(404);
-            response.type("text");
-            ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-            jsonResponse.put("error", 404);
-            jsonResponse.put("message", "Resource cannot be found on spigot");
-
-            return jsonResponse.toString();
-        }
-        if (resource.getFileType().equalsIgnoreCase("Via external site")) {
-            response.status(403);
-            response.type("text");
-            ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-            jsonResponse.put("error", 403);
-            jsonResponse.put("message", "Cannot download resource which has external download link.");
-
-            return jsonResponse.toString();
-        }
-        response.type("application/octec-stream");
-        response.status(200);
         File rjFile = new File(JarUpdateChecker.jarsFolder, resourceId + ".json");
         Map<String, String> resourceJson = Utils.readResourceJsonIfExisting(rjFile);
         File file;
-        if (resourceJson.isEmpty()) {
-            file = new File(JarUpdateChecker.jarsFolder, resourceId + resource.getFileType());
-        } else {
+        if (!resourceJson.isEmpty()) {
             file = new File(JarUpdateChecker.jarsFolder, resourceId + resourceJson.get("fileType"));
-        }
-        if (!file.exists()) {
+            response.type("application/octec-stream");
+            response.status(200);
+
+            String nameFormat = String.format("%s#%s%s", resourceJson.get("name"), resourceId, resourceJson.get("fileType"));
+            response.header("Content-Disposition", "attachment;filename=" + nameFormat);
+        } else {
+            Resource resource = Utils.resource(resourceId);
+            if (resource == null) {
+                response.status(404);
+                response.type("text");
+                ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
+                jsonResponse.put("error", 404);
+                jsonResponse.put("message", "Resource cannot be found on spigot");
+
+                return jsonResponse.toString();
+            }
+            if (resource.getFileType().equalsIgnoreCase("Via external site")) {
+                response.status(403);
+                response.type("text");
+                ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
+                jsonResponse.put("error", 403);
+                jsonResponse.put("message", "Cannot download resource which has external download link.");
+
+                return jsonResponse.toString();
+            }
+            String name = resource.getName().replaceAll("/", "").replaceAll("\\\\", "")
+                    .replaceAll("\\|", "").replace(".", "").split(" ")[0];
+            if (!nameMatcher.matcher(name).matches()) {
+                response.status(403);
+                response.type("text");
+                ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
+                jsonResponse.put("error", 403);
+                jsonResponse.put("message", "Resource name invalid.");
+
+                return jsonResponse.toString();
+            }
+            response.type("application/octec-stream");
+            response.status(200);
+            file = new File(JarUpdateChecker.jarsFolder, resourceId + resource.getFileType());
             file.createNewFile();
             try (InputStream in = getInputStream(resource.getDownloadUrl())) {
                 try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
                     write(in, out);
                 }
             }
-            rjFile.createNewFile();
             ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
-            objectNode.put("name", resource.getName());
+            objectNode.put("name", name);
             objectNode.put("fileType", resource.getFileType());
             objectNode.put("version", resource.getVersion());
             try (Writer writer = new FileWriter(rjFile)) {
                 writer.write(objectNode.toString());
             }
-            String nameFormat = String.format("%s#%s%s", resource.getName(), resourceId, resource.getFileType());
-            response.header("Content-Disposition", "attachment;filename=" + nameFormat);
-        } else {
-            String nameFormat = String.format("%s#%s%s", resourceJson.get("name"), resourceId, resourceJson.get("fileType"));
+            String nameFormat = String.format("%s#%s%s", name, resourceId, resource.getFileType());
             response.header("Content-Disposition", "attachment;filename=" + nameFormat);
         }
 

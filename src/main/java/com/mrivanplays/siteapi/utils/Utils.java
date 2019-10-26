@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -55,11 +54,8 @@ public class Utils {
 
     private static String userAgent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1";
     private static OkHttpClient okHttpClient;
-    private static final Pattern nameSplitPattern = Pattern.compile("\\|");
     public static ObjectMapper objectMapper;
     public static ScheduledExecutorService executor;
-    public static final int ratelimitErrorCode = 88;
-
 
     static {
         okHttpClient = new OkHttpClient();
@@ -105,15 +101,13 @@ public class Utils {
             Element redirect = document.selectFirst("a.inner[href]");
             String downloadUrl = "https://spigotmc.org/" + redirect.attr("href");
             Element name = document.selectFirst("h1");
-            String nameText = name.text();
-            String[] nameSplit = nameSplitPattern.split(nameText);
-            String version = nameSplit[nameSplit.length - 1].replace(" ", "");
+            Element version = name.selectFirst("span.muted");
             String sizeAndType = redirect.text().replace("Download Now ", "");
             if (sizeAndType.equalsIgnoreCase("Via external site")) {
-                return new Resource(downloadUrl, spigotId, version, sizeAndType, nameText);
+                return new Resource(downloadUrl, spigotId, version.text(), sizeAndType, name.text());
             }
             String type = sizeAndType.split(" ")[2];
-            return new Resource(downloadUrl, spigotId, version, type, nameText);
+            return new Resource(downloadUrl, spigotId, version.text(), type, name.text());
         }
     }
 

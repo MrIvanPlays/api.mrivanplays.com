@@ -62,7 +62,7 @@ public class JarUpdateChecker {
             Call call = Utils.call(String.format(requestURL, id));
             try (Response response = call.execute()) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(response.body().byteStream()));
-                String spigotVersion = reader.readLine().replace(" ", "");
+                String spigotVersion = reader.readLine();
                 reader.close();
                 File resourceJsonFile = new File(jarsFolder, id + ".json");
                 Map<String, String> resourceJson = Utils.readResourceJsonIfExisting(resourceJsonFile);
