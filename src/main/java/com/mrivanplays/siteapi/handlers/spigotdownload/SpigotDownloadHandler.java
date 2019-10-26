@@ -58,7 +58,7 @@ public class SpigotDownloadHandler implements Route {
 
     private WebClient webClient;
     private boolean requestGoingOn = false;
-    private final Pattern nameMatcher = Pattern.compile("[a-zA-Z0-9]+");
+    final Pattern nameMatcher = Pattern.compile("[a-zA-Z0-9]+");
 
     public SpigotDownloadHandler() {
         webClient = new WebClient(BrowserVersion.CHROME);

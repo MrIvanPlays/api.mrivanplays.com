@@ -58,6 +58,13 @@ public class UpdateCheckRunnable implements Runnable {
                     response.getFile().delete();
                     return;
                 }
+                String name = resource.getName().replaceAll("/", "").replaceAll("\\\\", "")
+                        .replaceAll("\\|", "").replace(".", "").split(" ")[0];
+                if (!spigotDownloadHandler.nameMatcher.matcher(name).matches()) {
+                    response.getFile().delete();
+                    response.getResourceJsonFile().delete();
+                    return;
+                }
                 File file;
                 if (!resource.getFileType().equalsIgnoreCase(response.getFileType())) {
                     response.getFile().delete();
@@ -72,7 +79,7 @@ public class UpdateCheckRunnable implements Runnable {
                 resourceJsonFile.delete();
                 resourceJsonFile.createNewFile();
                 ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
-                objectNode.put("name", resource.getName());
+                objectNode.put("name", name);
                 objectNode.put("fileType", resource.getFileType());
                 objectNode.put("version", resource.getVersion());
                 try (Writer writer = new FileWriter(resourceJsonFile)) {
