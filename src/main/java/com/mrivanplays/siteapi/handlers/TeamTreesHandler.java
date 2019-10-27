@@ -22,21 +22,20 @@
 */
 package com.mrivanplays.siteapi.handlers;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mrivanplays.siteapi.utils.Utils;
-import java.io.InputStreamReader;
 import okhttp3.Call;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
-public class MemeHandler implements Route {
+public class TeamTreesHandler implements Route {
 
   @Override
   public Object handle(Request request, Response response) throws Exception {
     response.type("text");
-    response.status(200);
 
     String rawParam = request.queryParams("raw");
     boolean raw = false;
@@ -44,19 +43,25 @@ public class MemeHandler implements Route {
       raw = Boolean.parseBoolean(rawParam);
     }
 
-    Call call = Utils.call("https://reddit.com/r/meme/random.json");
+    Call call = Utils.call("https://teamtrees.org/");
     try (okhttp3.Response okHttpResponse = call.execute()) {
-      JsonNode node =
-          Utils.objectMapper.readTree(new InputStreamReader(okHttpResponse.body().byteStream()));
-      String imageLink =
-          node.get(0).with("data").withArray("children").get(0).with("data").get("url").asText();
-      if (raw) {
-        return imageLink;
+      if (okHttpResponse.code() == 503) {
+        response.status(503);
+        ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
+        node.put("error", 503);
+        node.put("message", "teamtrees.org is being overloaded with traffic");
+        return node.toString();
       }
-      ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-      jsonResponse.put("image", imageLink);
+      response.status(200);
+      Document document = Jsoup.parse(okHttpResponse.body().string());
+      String count = document.selectFirst("div.counter").attr("data-count");
+      if (raw) {
+        return call;
+      }
 
-      return jsonResponse.toString();
+      ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
+      node.put("trees", count);
+      return node.toString();
     }
   }
 }

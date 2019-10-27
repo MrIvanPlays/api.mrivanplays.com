@@ -59,9 +59,23 @@
   <p>
     <a href="https://api.mrivanplays.com/meme">https://api.mrivanplays.com/meme</a> - gets a random
     meme from <a href="https://reddit.com/r/meme">reddit</a>.
+    <br/> <br/>
+    <b>Query parameters</b>:
     <br/>
-    <b>A successful request will look like this:</b>
-  <pre><code>{"image": "[link to the image, video, etc]"}</code></pre>
+    <b class="blue">raw</b> - if true, the output won't be a json string, but a direct version
+    <br/> <br/>
+    <b>Examples of successful requests:</b>
+    <br/> <br/>
+    Example request url:
+    <a href="https://api.mrivanplays.com/meme">https://api.mrivanplays.com/meme</a>
+    <br/>
+    The specified link will output this:
+    <pre><code>{"image": "[link to the image, video, etc]"}</code></pre>
+    Example request url:
+    <a href="https://api.mrivanplays.com/meme?raw=true">https://api.mrivanplays.com/meme?raw=true</a>
+    <br/>
+    The specified link will output this:
+    <pre><code>[link to the image, video, etc]</code></pre>
   </p>
   <hr/>
   <p>
@@ -75,7 +89,7 @@
     <br/>
     <b class="blue">groupId</b> - example "com.mrivanplays" ;
     <br/>
-    <b class="blue">raw</b> - the output won't be a json string, but a direct version ;
+    <b class="blue">raw</b> - if true, the output won't be a json string, but a direct version ;
     <br/>
     <br/>
     If no query parameters specified, then the default repo url is
@@ -101,6 +115,32 @@
   <pre><code>{"success": false, "error": 404, "message": "Dependency not found"}</code></pre>
   </p>
   <hr/>
+  <p>
+    <h2>DISCLAIMER: This API will be shut down at 1st of January, 2020</h2>
+    https://api.mrivanplays.com/trees - retrieves the count of trees that are being planted by
+    <a href="https://teamtrees.org/">https://teamtrees.org/</a>
+    <br/> <br/>
+    <b>Query parameters</b>:
+    <br/>
+    <b class="blue">raw</b> - if true, the output won't be a json string, but a direct version
+    <br/> <br/>
+    <b>Examples of successful requests:</b>
+    <br/> <br/>
+    Example request url:
+    <a href="https://api.mrivanplays.com/trees">https://api.mrivanplays.com/trees</a>
+    <br/>
+    The specified link will output this:
+    <pre><code>{"trees": "[number of planted trees]"}</code></pre>
+    Example request url:
+    <a href="https://api.mrivanplays.com/trees?raw=true">https://api.mrivanplays.com/trees?raw=true</a>
+   <br/>
+    The specified link will output this:
+    <pre><code>[number of planted trees]</code></pre>
+    <br/>
+    <b>Error responses:</b>
+    <pre><code>{"error": 503, "message": "teamtrees.org is being overloaded with traffic"}</code></pre>
+  </p>
+  <hr />
 </div>
 </body>
 <link rel="stylesheet"
