@@ -77,12 +77,8 @@ public class LibraryVersionHandler implements Route {
       try (BufferedReader reader =
           new BufferedReader(new InputStreamReader(okHttpResponse.body().byteStream()))) {
         List<String> lines = reader.lines().collect(Collectors.toList());
-        StringBuilder bufferBuilder = new StringBuilder();
-        bufferBuilder.append("<?xml version=\"1.0\"?>").append("\n");
-        for (String line : lines) {
-          bufferBuilder.append(line).append("\n");
-        }
-        String buffer = bufferBuilder.toString();
+        String buffer = Utils.inlineXML(lines);
+        lines.clear();
         Document document = Jsoup.parse(buffer);
         Element version = document.selectFirst("latest");
         if (version == null) {

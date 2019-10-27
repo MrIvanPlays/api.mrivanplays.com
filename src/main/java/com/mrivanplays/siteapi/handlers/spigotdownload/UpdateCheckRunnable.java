@@ -54,11 +54,8 @@ public class UpdateCheckRunnable implements Runnable {
       for (UpdateResponse response : updateNeeded) {
         String resourceId = response.getResourceId();
         Resource resource = Utils.resource(resourceId);
-        if (resource.getFileType().equalsIgnoreCase("Via external site")) {
-          response.getFile().delete();
-          return;
-        }
-        if (!spigotDownloadHandler.nameMatcher.matcher(resource.getName()).matches()) {
+        if (resource.getFileType().equalsIgnoreCase("Via external site")
+            || (!spigotDownloadHandler.nameMatcher.matcher(resource.getName()).matches())) {
           response.getFile().delete();
           response.getResourceJsonFile().delete();
           return;

@@ -108,13 +108,8 @@ public class SpigotDownloadHandler implements Route {
     try {
       Integer.parseInt(resourceId);
     } catch (NumberFormatException e) {
-      response.status(404);
-      response.type("text");
-      ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-      jsonResponse.put("error", 404);
-      jsonResponse.put("message", "Invalid resource id '" + resourceId + "'");
-
-      return jsonResponse.toString();
+      errorResponse(response, 404);
+      return error(String.format("Invalid resource id '%s'", resourceId), 404);
     }
 
     File rjFile = new File(JarUpdateChecker.jarsFolder, resourceId + ".json");
@@ -132,41 +127,21 @@ public class SpigotDownloadHandler implements Route {
     } else {
       Resource resource = Utils.resource(resourceId);
       if (resource == null) {
-        response.status(404);
-        response.type("text");
-        ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-        jsonResponse.put("error", 404);
-        jsonResponse.put("message", "Resource cannot be found on spigot");
-
-        return jsonResponse.toString();
+        errorResponse(response, 404);
+        return error("Resource cannot be found on spigot", 404);
       }
       if (resource.isPremium()) {
-        response.status(403);
-        response.type("text");
-        ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-        jsonResponse.put("error", 403);
-        jsonResponse.put("message", "Resource is premium");
-
-        return jsonResponse.toString();
+        errorResponse(response, 403);
+        return error("Resource is premium", 403);
       }
       if (resource.getFileType().equalsIgnoreCase("Via external site")) {
-        response.status(403);
-        response.type("text");
-        ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-        jsonResponse.put("error", 403);
-        jsonResponse.put("message", "Cannot download resource which has external download link.");
-
-        return jsonResponse.toString();
+        errorResponse(response, 403);
+        return error("Cannot download resource which has external download link.", 403);
       }
       String name = resource.getName();
       if (!nameMatcher.matcher(name).matches()) {
-        response.status(403);
-        response.type("text");
-        ObjectNode jsonResponse = new ObjectNode(Utils.objectMapper.getNodeFactory());
-        jsonResponse.put("error", 403);
-        jsonResponse.put("message", "Resource name invalid.");
-
-        return jsonResponse.toString();
+        errorResponse(response, 403);
+        return error("Resource name invalid.", 403);
       }
       response.type("application/octec-stream");
       response.status(200);
@@ -215,5 +190,17 @@ public class SpigotDownloadHandler implements Route {
     while ((count = in.read(buffer)) != -1) {
       out.write(buffer, 0, count);
     }
+  }
+
+  private String error(String message, int code) {
+    ObjectNode objectNode = new ObjectNode(Utils.objectMapper.getNodeFactory());
+    objectNode.put("error", code);
+    objectNode.put("message", message);
+    return objectNode.toString();
+  }
+
+  private void errorResponse(Response response, int code) {
+    response.status(code);
+    response.type("text");
   }
 }

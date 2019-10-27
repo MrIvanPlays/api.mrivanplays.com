@@ -52,28 +52,28 @@ public class Utils {
   private static String userAgent =
       "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1";
   private static OkHttpClient okHttpClient;
+  private static CookieManager cookieManager;
   public static ObjectMapper objectMapper;
   public static ScheduledExecutorService executor;
 
   static {
     okHttpClient = new OkHttpClient();
+    cookieManager = new CookieManager();
+    cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+    CookieHandler.setDefault(cookieManager);
     objectMapper = new ObjectMapper();
     executor = Executors.newSingleThreadScheduledExecutor();
   }
 
   public static List<HttpCookie> getCookies(String urlName) {
     try {
-      CookieManager manager = new CookieManager();
-      manager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
-      CookieHandler.setDefault(manager);
-
       URL url = new URL(urlName);
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("GET");
       connection.addRequestProperty("User-Agent", userAgent);
       connection.getContent();
 
-      CookieStore cookieJar = manager.getCookieStore();
+      CookieStore cookieJar = cookieManager.getCookieStore();
       return cookieJar.getCookies();
     } catch (IOException e) {
       e.printStackTrace();
@@ -130,5 +130,14 @@ public class Utils {
       map.put("version", version);
     }
     return map;
+  }
+
+  public static String inlineXML(List<String> xmlFile) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("<?xml version=\"1.0\"?>").append("\n");
+    for (String line : xmlFile) {
+      builder.append(line).append("\n");
+    }
+    return builder.toString();
   }
 }

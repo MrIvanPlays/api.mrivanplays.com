@@ -47,7 +47,8 @@ public class JarUpdateChecker {
   public List<UpdateResponse> checkForUpdates() throws IOException {
     List<UpdateResponse> updateNeeded = new ArrayList<>();
     File[] files =
-        jarsFolder.listFiles((dir, name) -> name.endsWith(".jar") || name.endsWith(".zip"));
+        jarsFolder.listFiles(
+            (dir, name) -> name.endsWith(".jar") || name.endsWith(".zip") || name.endsWith(".sk"));
     if (files == null || files.length == 0) {
       return updateNeeded; // empty list
     }
@@ -55,8 +56,8 @@ public class JarUpdateChecker {
       String fullName = file.getName();
       String fileType = fullName.substring(fullName.indexOf('.') + 1);
       String id = fullName.replace(fileType, "");
-      String requestURL = "https://api.spigotmc.org/legacy/update.php?resource=%s";
-      Call call = Utils.call(String.format(requestURL, id));
+      Call call =
+          Utils.call(String.format("https://api.spigotmc.org/legacy/update.php?resource=%s", id));
       try (Response response = call.execute()) {
         BufferedReader reader =
             new BufferedReader(new InputStreamReader(response.body().byteStream()));
@@ -68,6 +69,7 @@ public class JarUpdateChecker {
         if (!jarVersion.equalsIgnoreCase(spigotVersion)) {
           updateNeeded.add(new UpdateResponse(file, resourceJsonFile, id, fileType));
         }
+        resourceJson.clear();
       }
     }
     return updateNeeded;
