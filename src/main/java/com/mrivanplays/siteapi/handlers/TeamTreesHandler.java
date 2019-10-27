@@ -24,6 +24,7 @@ package com.mrivanplays.siteapi.handlers;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mrivanplays.siteapi.utils.Utils;
+import java.net.SocketTimeoutException;
 import okhttp3.Call;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -56,11 +57,17 @@ public class TeamTreesHandler implements Route {
       Document document = Jsoup.parse(okHttpResponse.body().string());
       String count = document.selectFirst("div.counter").attr("data-count");
       if (raw) {
-        return call;
+        return count;
       }
 
       ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
       node.put("trees", count);
+      return node.toString();
+    } catch (SocketTimeoutException e) {
+      response.status(408);
+      ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
+      node.put("error", 408);
+      node.put("message", "teamtrees.org timed out");
       return node.toString();
     }
   }
