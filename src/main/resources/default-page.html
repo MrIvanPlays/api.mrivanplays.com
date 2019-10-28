@@ -130,7 +130,7 @@
     <a href="https://api.mrivanplays.com/trees">https://api.mrivanplays.com/trees</a>
     <br/>
     The specified link will output this:
-    <pre><code>{"trees": "[number of planted trees]"}</code></pre>
+    <pre><code>{"success": true, "trees": "[number of planted trees]"}</code></pre>
     Example request url:
     <a href="https://api.mrivanplays.com/trees?raw=true">https://api.mrivanplays.com/trees?raw=true</a>
    <br/>
@@ -138,8 +138,8 @@
     <pre><code>[number of planted trees]</code></pre>
     <br/>
     <b>Error responses:</b>
-    <pre><code>{"error": 503, "message": "teamtrees.org is being overloaded with traffic"}</code></pre>
-    <pre><code>{"error": 408, "message": "teamtrees.org timed out"}</code></pre>
+    <pre><code>{"success": false, "error": 503, "message": "teamtrees.org is being overloaded with traffic"}</code></pre>
+    <pre><code>{"success": false, "error": 408, "message": "teamtrees.org timed out"}</code></pre>
   </p>
   <hr />
 </div>

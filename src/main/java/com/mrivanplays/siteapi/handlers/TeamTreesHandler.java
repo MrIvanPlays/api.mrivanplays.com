@@ -48,10 +48,7 @@ public class TeamTreesHandler implements Route {
     try (okhttp3.Response okHttpResponse = call.execute()) {
       if (okHttpResponse.code() == 503) {
         response.status(503);
-        ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
-        node.put("error", 503);
-        node.put("message", "teamtrees.org is being overloaded with traffic");
-        return node.toString();
+        return error(503, "teamtrees.org is being overloaded with traffic");
       }
       response.status(200);
       Document document = Jsoup.parse(okHttpResponse.body().string());
@@ -61,14 +58,20 @@ public class TeamTreesHandler implements Route {
       }
 
       ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
+      node.put("success", true);
       node.put("trees", count);
       return node.toString();
     } catch (SocketTimeoutException e) {
       response.status(408);
-      ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
-      node.put("error", 408);
-      node.put("message", "teamtrees.org timed out");
-      return node.toString();
+      return error(408, "teamtrees.org timed out");
     }
+  }
+
+  private String error(int code, String message) {
+    ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
+    node.put("success", false);
+    node.put("error", code);
+    node.put("message", message);
+    return node.toString();
   }
 }
