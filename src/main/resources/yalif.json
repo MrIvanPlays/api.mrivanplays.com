@@ -1,0 +1,8 @@
+{
+  "loggingFormat": "[HH:mm:ss] [%level]: %msg%n",
+  "logFileDirectory": "/usr/share/nginx/siteapi/logs/",
+  "timeDateFormat": "HH:mm:ss",
+  "disabledLevels": [
+    "debug"
+  ]
+}
