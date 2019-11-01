@@ -28,6 +28,7 @@ import static spark.Spark.notFound;
 import static spark.Spark.port;
 
 import com.mrivanplays.siteapi.handlers.DefaultHandler;
+import com.mrivanplays.siteapi.handlers.FaviconHandler;
 import com.mrivanplays.siteapi.handlers.LibraryVersionHandler;
 import com.mrivanplays.siteapi.handlers.MemeHandler;
 import com.mrivanplays.siteapi.handlers.TeamTreesHandler;
@@ -40,6 +41,9 @@ public class Server {
 
     DefaultHandler defaultHandler = new DefaultHandler();
     notFound(defaultHandler);
+
+    FaviconHandler favicon = new FaviconHandler();
+    get("/favicon.ico", favicon);
 
     MemeHandler memeHandler = new MemeHandler();
     get("/meme", memeHandler);

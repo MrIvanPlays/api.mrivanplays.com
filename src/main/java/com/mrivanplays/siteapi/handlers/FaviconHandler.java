@@ -22,33 +22,42 @@
 */
 package com.mrivanplays.siteapi.handlers;
 
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileReader;
-import java.util.stream.Collectors;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
-public class DefaultHandler implements Route {
+// setup a favicon so spark stop flooding the service with things such as this
+// https://gyazo.com/cff98187e00bc0db3978d5b2f045a3e1
+public class FaviconHandler implements Route {
 
   private File file;
 
-  public DefaultHandler() {
-    file = new File("/usr/share/nginx/siteapi/default-page.html");
+  public FaviconHandler() {
+    file = new File("/usr/share/nginx/siteapi/favicon.ico");
   }
 
   @Override
   public Object handle(Request request, Response response) throws Exception {
-    response.type("text/html");
+    response.raw().setContentType("image/vnd.microsoft.icon");
     response.status(200);
-
-    StringBuilder bean = new StringBuilder();
-    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-      for (String line : reader.lines().collect(Collectors.toList())) {
-        bean.append(line).append("\n");
+    try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
+      try (OutputStream out = new BufferedOutputStream(response.raw().getOutputStream())) {
+        byte[] buf = new byte[8192];
+        while (true) {
+          int r = in.read(buf);
+          if (r == -1) {
+            break;
+          }
+          out.write(buf, 0, r);
+        }
       }
     }
-    return bean.toString();
+    return "";
   }
 }
