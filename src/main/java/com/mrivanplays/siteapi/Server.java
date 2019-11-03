@@ -29,8 +29,6 @@ import static spark.Spark.port;
 
 import com.mrivanplays.siteapi.handlers.DefaultHandler;
 import com.mrivanplays.siteapi.handlers.FaviconHandler;
-import com.mrivanplays.siteapi.handlers.LibraryVersionHandler;
-import com.mrivanplays.siteapi.handlers.MemeHandler;
 import com.mrivanplays.siteapi.handlers.TeamTreesHandler;
 
 public class Server {
@@ -45,17 +43,9 @@ public class Server {
     FaviconHandler favicon = new FaviconHandler();
     get("/favicon.ico", favicon);
 
-    MemeHandler memeHandler = new MemeHandler();
-    get("/meme", memeHandler);
-    get("/meme/", memeHandler);
-
 //    SpigotDownloadHandler sdh = new SpigotDownloadHandler();
 //    get("/spigot/download/:id", sdh);
 //    get("/spigot/download/:id/", sdh);
-
-    LibraryVersionHandler lvh = new LibraryVersionHandler();
-    get("/library/version/:id", lvh);
-    get("/library/version/:id/", lvh);
 
     TeamTreesHandler tth = new TeamTreesHandler();
     get("/trees", tth);

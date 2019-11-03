@@ -24,46 +24,63 @@ package com.mrivanplays.siteapi.handlers;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mrivanplays.siteapi.utils.Utils;
-import java.net.SocketTimeoutException;
-import okhttp3.Call;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import com.mrivanplays.teamtreesclient.Donation;
+import com.mrivanplays.teamtreesclient.FullGoalData;
+import com.mrivanplays.teamtreesclient.SiteResponse;
+import com.mrivanplays.teamtreesclient.TeamTreesClient;
+import java.util.Optional;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
 public class TeamTreesHandler implements Route {
 
+  private TeamTreesClient client;
+
+  public TeamTreesHandler() {
+    client = new TeamTreesClient();
+  }
+
   @Override
   public Object handle(Request request, Response response) throws Exception {
     response.type("text");
-
-    String rawParam = request.queryParams("raw");
-    boolean raw = false;
-    if (rawParam != null) {
-      raw = Boolean.parseBoolean(rawParam);
-    }
-
-    Call call = Utils.call("https://teamtrees.org/");
-    try (okhttp3.Response okHttpResponse = call.execute()) {
-      if (okHttpResponse.code() == 503) {
-        response.status(503);
-        return error(503, "teamtrees.org is being overloaded with traffic");
-      }
-      response.status(200);
-      Document document = Jsoup.parse(okHttpResponse.body().string());
-      String count = document.selectFirst("div.counter").attr("data-count");
-      if (raw) {
-        return count;
-      }
-
-      ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
-      node.put("success", true);
-      node.put("trees", count);
-      return node.toString();
-    } catch (SocketTimeoutException e) {
+    SiteResponse<FullGoalData> siteResponse = client.retrieveFullData().join();
+    if (siteResponse.getResponseCode() == 408) {
       response.status(408);
       return error(408, "teamtrees.org timed out");
+    }
+    if (siteResponse.getResponseCode() == 503) {
+      response.status(503);
+      return error(503, "teamtrees.org is being overloaded with traffic");
+    }
+    Optional<FullGoalData> dataOptional = siteResponse.getData();
+    if (dataOptional.isPresent()) {
+      response.status(200);
+      FullGoalData data = dataOptional.get();
+      ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
+      node.put("success", true);
+      node.put("trees", data.getTrees());
+      node.put("treesLeft", data.getTreesLeft());
+      node.put("percentDone", data.getPercentDone());
+      node.put("daysLeft", data.getDaysLeft());
+      Donation lastDon = data.getMostRecentDonation();
+      ObjectNode lastDonation = new ObjectNode(Utils.objectMapper.getNodeFactory());
+      lastDonation.put("nameFrom", lastDon.getName());
+      lastDonation.put("treesDonated", lastDon.getTreesDonated());
+      lastDonation.put("donatedAt", lastDon.getDateAt());
+      lastDonation.put("message", lastDon.getMessage());
+      node.set("lastDonation", lastDonation);
+      Donation topDon = data.getTopDonation();
+      ObjectNode topDonation = new ObjectNode(Utils.objectMapper.getNodeFactory());
+      topDonation.put("nameFrom", topDon.getName());
+      topDonation.put("treesDonated", topDon.getTreesDonated());
+      topDonation.put("donatedAt", topDon.getDateAt());
+      topDonation.put("message", topDon.getMessage());
+      node.set("topDonation", topDonation);
+      return node.toString();
+    } else {
+      response.status(400);
+      return error(400, "Other error occurred while trying to retrieve data");
     }
   }
 
