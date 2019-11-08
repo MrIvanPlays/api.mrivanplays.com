@@ -28,7 +28,12 @@ import com.mrivanplays.teamtreesclient.Donation;
 import com.mrivanplays.teamtreesclient.FullGoalData;
 import com.mrivanplays.teamtreesclient.SiteResponse;
 import com.mrivanplays.teamtreesclient.TeamTreesClient;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -36,14 +41,38 @@ import spark.Route;
 public class TeamTreesHandler implements Route {
 
   private TeamTreesClient client;
+  private ObjectNode rateLimitError;
+  private Map<String, Integer> currentRateLimit;
 
   public TeamTreesHandler() {
     client = new TeamTreesClient();
+    rateLimitError = new ObjectNode(Utils.objectMapper.getNodeFactory());
+    rateLimitError.put("success", false);
+    rateLimitError.put("error", 80);
+    rateLimitError.put("message", "Rate limit exceeded");
+    currentRateLimit = new HashMap<>();
+    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    executor.scheduleAtFixedRate(() -> {
+      if (!currentRateLimit.isEmpty()) {
+        currentRateLimit.clear();
+      }
+    }, 30, 30, TimeUnit.SECONDS);
   }
 
   @Override
   public Object handle(Request request, Response response) throws Exception {
     response.type("text");
+    String requesterIp = request.ip();
+    if (!currentRateLimit.containsKey(requesterIp)) {
+      currentRateLimit.put(requesterIp, 1);
+    } else {
+      int currentRequests = currentRateLimit.get(requesterIp);
+      if (currentRequests > 30) {
+        response.status(80);
+        return rateLimitError.toString();
+      }
+      currentRateLimit.replace(requesterIp, currentRequests + 1);
+    }
     SiteResponse<FullGoalData> siteResponse = client.retrieveFullData().join();
     if (siteResponse.getResponseCode() == 408) {
       response.status(408);
