@@ -64,6 +64,13 @@ public class TeamTreesHandler implements Route {
     response.type("application/json");
     response.header("Access-Control-Allow-Origin", "*");
     response.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+
+    String prettyPrintParam = request.queryParams("prettyPrinting");
+    boolean prettyPrint = false;
+    if (prettyPrintParam != null) {
+      prettyPrint = Boolean.parseBoolean(prettyPrintParam);
+    }
+
     String requesterIp = request.ip();
     if (!currentRateLimit.containsKey(requesterIp)) {
       currentRateLimit.put(requesterIp, 1);
@@ -108,6 +115,11 @@ public class TeamTreesHandler implements Route {
       topDonation.put("donatedAt", topDon.getDateAt());
       topDonation.put("message", topDon.getMessage());
       node.set("topDonation", topDonation);
+      if (prettyPrint) {
+        String indent = Utils.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+        System.out.println(indent);
+        return indent;
+      }
       return node.toString();
     } else {
       response.status(400);
