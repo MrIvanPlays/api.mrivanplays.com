@@ -25,11 +25,13 @@ package com.mrivanplays.siteapi;
 import static spark.Spark.get;
 import static spark.Spark.initExceptionHandler;
 import static spark.Spark.notFound;
+import static spark.Spark.options;
 import static spark.Spark.port;
 
 import com.mrivanplays.siteapi.handlers.DefaultHandler;
 import com.mrivanplays.siteapi.handlers.FaviconHandler;
 import com.mrivanplays.siteapi.handlers.TeamTreesHandler;
+import spark.Route;
 
 public class Server {
 
@@ -43,13 +45,24 @@ public class Server {
     FaviconHandler favicon = new FaviconHandler();
     get("/favicon.ico", favicon);
 
-//    SpigotDownloadHandler sdh = new SpigotDownloadHandler();
-//    get("/spigot/download/:id", sdh);
-//    get("/spigot/download/:id/", sdh);
+    //    SpigotDownloadHandler sdh = new SpigotDownloadHandler();
+    //    get("/spigot/download/:id", sdh);
+    //    get("/spigot/download/:id/", sdh);
 
     TeamTreesHandler tth = new TeamTreesHandler();
     get("/trees", tth);
     get("/trees/", tth);
+
+    Route tthOptions =
+        (rq, response) -> {
+          response.header("Access-Control-Allow-Origin", "*");
+          response.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+          response.header("Content-Length", "0");
+          return null;
+        };
+
+    options("/trees", tthOptions);
+    options("/trees/", tthOptions);
 
     get("/", defaultHandler);
   }
