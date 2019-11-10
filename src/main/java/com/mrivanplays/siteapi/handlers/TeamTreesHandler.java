@@ -61,7 +61,7 @@ public class TeamTreesHandler implements Route {
 
   @Override
   public Object handle(Request request, Response response) throws Exception {
-    response.type("text");
+    response.type("application/json");
     String requesterIp = request.ip();
     if (!currentRateLimit.containsKey(requesterIp)) {
       currentRateLimit.put(requesterIp, 1);
