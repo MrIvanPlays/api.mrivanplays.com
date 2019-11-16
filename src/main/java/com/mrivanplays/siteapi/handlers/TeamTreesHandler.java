@@ -116,9 +116,7 @@ public class TeamTreesHandler implements Route {
       topDonation.put("message", topDon.getMessage());
       node.set("topDonation", topDonation);
       if (prettyPrint) {
-        String indent = Utils.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-        // Don't return directly as it outputs broken json.
-        return indent;
+        return Utils.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
       }
       return node.toString();
     } else {
