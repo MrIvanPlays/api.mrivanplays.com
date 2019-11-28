@@ -25,6 +25,7 @@ package com.mrivanplays.siteapi.handlers;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.stream.Collectors;
 import spark.Request;
 import spark.Response;
@@ -32,10 +33,15 @@ import spark.Route;
 
 public class DefaultHandler implements Route {
 
-  private File file;
+  private String html;
 
   public DefaultHandler() {
-    file = new File("/usr/share/nginx/siteapi/default-page.html");
+    File file = new File("/usr/share/nginx/siteapi/default-page.html");
+    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+      html = reader.lines().collect(Collectors.joining());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override
@@ -43,12 +49,6 @@ public class DefaultHandler implements Route {
     response.type("text/html");
     response.status(200);
 
-    StringBuilder bean = new StringBuilder();
-    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-      for (String line : reader.lines().collect(Collectors.toList())) {
-        bean.append(line).append("\n");
-      }
-    }
-    return bean.toString();
+    return html;
   }
 }

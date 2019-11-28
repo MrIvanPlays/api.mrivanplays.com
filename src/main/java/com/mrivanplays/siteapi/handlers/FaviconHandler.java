@@ -39,7 +39,7 @@ public class FaviconHandler implements Route {
   private File file;
 
   public FaviconHandler() {
-    file = new File("/usr/share/nginx/siteapi/favicon.ico");
+    file = new File("/usr/share/nginx/favicon.ico");
   }
 
   @Override
