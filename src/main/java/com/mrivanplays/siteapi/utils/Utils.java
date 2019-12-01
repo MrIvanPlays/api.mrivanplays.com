@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import okhttp3.Call;
+import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -51,18 +52,18 @@ public class Utils {
 
   private static String userAgent =
       "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Gecko/20100101 Firefox/15.0.1";
-  private static OkHttpClient okHttpClient;
   private static CookieManager cookieManager;
+  public static OkHttpClient okHttpClient;
   public static ObjectMapper objectMapper;
   public static ScheduledExecutorService executor;
 
   static {
-    okHttpClient = new OkHttpClient();
+    executor = Executors.newScheduledThreadPool(1);
+    okHttpClient = new OkHttpClient.Builder().dispatcher(new Dispatcher(executor)).build();
     cookieManager = new CookieManager();
     cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
     CookieHandler.setDefault(cookieManager);
     objectMapper = new ObjectMapper();
-    executor = Executors.newSingleThreadScheduledExecutor();
   }
 
   public static List<HttpCookie> getCookies(String urlName) {

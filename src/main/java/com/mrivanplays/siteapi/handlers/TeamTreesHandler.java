@@ -31,9 +31,9 @@ import com.mrivanplays.teamtreesclient.TeamTreesClient;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import okhttp3.OkHttpClient;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -44,14 +44,13 @@ public class TeamTreesHandler implements Route {
   private ObjectNode rateLimitError;
   private Map<String, Integer> currentRateLimit;
 
-  public TeamTreesHandler() {
-    client = new TeamTreesClient();
+  public TeamTreesHandler(ScheduledExecutorService executor, OkHttpClient httpClient) {
+    client = new TeamTreesClient(httpClient, executor);
     rateLimitError = new ObjectNode(Utils.objectMapper.getNodeFactory());
     rateLimitError.put("success", false);
     rateLimitError.put("error", 80);
     rateLimitError.put("message", "Rate limit exceeded");
     currentRateLimit = new HashMap<>();
-    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     executor.scheduleAtFixedRate(() -> {
       if (!currentRateLimit.isEmpty()) {
         currentRateLimit.clear();

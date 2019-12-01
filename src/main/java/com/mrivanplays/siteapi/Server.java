@@ -31,6 +31,7 @@ import static spark.Spark.port;
 import com.mrivanplays.siteapi.handlers.DefaultHandler;
 import com.mrivanplays.siteapi.handlers.FaviconHandler;
 import com.mrivanplays.siteapi.handlers.TeamTreesHandler;
+import com.mrivanplays.siteapi.utils.Utils;
 import spark.Route;
 
 public class Server {
@@ -49,7 +50,7 @@ public class Server {
     //    get("/spigot/download/:id", sdh);
     //    get("/spigot/download/:id/", sdh);
 
-    TeamTreesHandler tth = new TeamTreesHandler();
+    TeamTreesHandler tth = new TeamTreesHandler(Utils.executor, Utils.okHttpClient);
     get("/trees", tth);
     get("/trees/", tth);
 
