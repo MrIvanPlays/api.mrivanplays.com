@@ -97,9 +97,6 @@ public class TeamTreesHandler implements Route {
       ObjectNode node = new ObjectNode(Utils.objectMapper.getNodeFactory());
       node.put("success", true);
       node.put("trees", data.getTrees());
-      node.put("treesLeft", data.getTreesLeft());
-      node.put("percentDone", data.getPercentDone());
-      node.put("daysLeft", data.getDaysLeft());
       Donation lastDon = data.getMostRecentDonation();
       ObjectNode lastDonation = new ObjectNode(Utils.objectMapper.getNodeFactory());
       lastDonation.put("nameFrom", lastDon.getName());
